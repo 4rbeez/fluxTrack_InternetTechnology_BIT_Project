@@ -39,7 +39,6 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ### Use Case fluxTrack
 
 ![](images/use-case.png)
-
 - UC-1 [Show all the Products]: Admin can retrieve all the Products on the product range
 - UC-2 [Show a Product]: Admin can retrieve the information on a specific product.
 - UC-3 [Edit a Product]: Admin can create, update, and delete products from the product range.
