@@ -23,7 +23,7 @@ This is a implementation project for the BIT module Internet Technology.
   - [Milestones](#milestones)
 
 ## Analysis
-> 🚧: You can reuse the analysis (you made) from other projects (e.g., requirement engineering), but it must be submitted according to the following template. 
+> 🚧: You can reuse the analysis (you made) from other projects (e.g., requirement engineering), but it must be submitted according to the following template.
 
 
 
