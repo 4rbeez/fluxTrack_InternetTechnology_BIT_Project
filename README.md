@@ -1,4 +1,4 @@
-# fluxTrack Inventor Management System
+# fluxTrack Inventory Management System
 
 This is a implementation project for the BIT module Internet Technology. 
 
