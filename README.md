@@ -1,7 +1,5 @@
 # fluxTrack Inventory Management System
 
-fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. The goal of the system is to reduce manual work, improve inventory transparency, and synchronize relevant stock data with the fluxed web shop. In the Internet Technology demonstrator, the focus is on partner login, product overview, product creation, stock adjustment, search/filter functions, and a simplified Shopify integration boundary. Different users of fluxed GmbH and its partners can receive different access rights based on their application role. 
-
 #### Contents:
 - [Analysis](#analysis)
   - [Scenario](#scenario)
@@ -25,7 +23,7 @@ The assessment also requires that the application demonstrates at least three la
 
 ### Scenario
 
-fluxTrack is a lightweight inventory management demonstrator for fluxed GmbH and its partners. Partners log into a private web application to view their products, create new product entries, adjust stock quantities, and search or filter their portfolio. fluxed GmbH can access a broader overview across partner portfolios. The system is designed to reduce manual communication, improve product data quality, and support later integration with Shopify for stock synchronization and order-related updates.
+fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. The goal of the system is to reduce manual work, improve inventory transparency, and synchronize relevant stock data with the fluxed web shop. In the Internet Technology demonstrator, the focus is on partner login, product overview, product creation, stock adjustment, search/filter functions, and a simplified Shopify integration boundary. Different users of fluxed GmbH and its partners can receive different access rights based on their application role. 
 
 ### User Stories
 (1) As an admin, I want to view lists of products, partners, and stock updates so that I can monitor inventory data efficiently.
@@ -37,7 +35,6 @@ fluxTrack is a lightweight inventory management demonstrator for fluxed GmbH and
 (7) As a partner, I want to see a list of my assigned products so that I can track what is available in my store.
 (8) As a partner, I want to update stock quantities for my products so that the system reflects current inventory levels.
 (9) As a partner, I want to create a new product entry so that I can register products that are not yet in the system.
-
 
 ### Use Case fluxTrack
 
