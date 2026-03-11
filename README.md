@@ -1,10 +1,6 @@
 # fluxTrack Inventory Management System
 
-This is a implementation project for the BIT module Internet Technology. 
-
-[![License](https://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
-
-> 🚧: **This is a template project**: Make sure you adapt this documentation and the source code in this project according to your needs and use case. Comments are provided with "🚧:". Do not leave these comments in your final submission!
+fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. In the Internet Technology implementation, the demonstrator focuses on partner login, product listing, product creation, stock adjustment, and basic search/filter functions. External Shopify synchronization is represented as a simplified integration boundary. The different partners of fluxed GmbH get different access to the web tool via different (database) access roles.
 
 #### Contents:
 - [Analysis](#analysis)
