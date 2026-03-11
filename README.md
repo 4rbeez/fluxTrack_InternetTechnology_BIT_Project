@@ -25,25 +25,28 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 
 ### Scenario
 
-PizzaRP (Pizzeria Reference Project) is the smallest possible and lightweight demonstration tool allowing the pizzaiolo (Role: Admin) to manage its pizza catalog. 
+fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. In the Internet Technology implementation, the demonstrator focuses on partner login, product listing, product creation, stock adjustment, and basic search/filter functions. External Shopify synchronization is represented as a simplified integration boundary. The different partners of fluxed GmbH get different access to the web tool via different (database) access roles.
 
 ### User Stories
-1. As an Admin, I want to have a Web app to use on different mobile devices and desktop computers.
-2. As an Admin, I want to see a consistent visual appearance to navigate easily, and it should look consistent.
-3. As an Admin, I want to use list views to explore and read my business data.
-4. As an Admin, I want to use edit and create views to maintain my business data.
-5. As an Admin, I want to log-in so that I can authenticate myself.
-6. As a User, I want to use list views so that I can access public pages.
-7. (Optional) As a User, I want to authenticate myself so that I can read my personal and confidential data.
+(1) As an admin, I want to view lists of products, partners, and stock updates so that I can monitor inventory data efficiently.
+(2) As an admin, I want to create and edit products and partner data so that I can maintain correct business information in the system.
+(3) As an admin, I want to review stock change history so that I can understand when and why inventory levels were updated.
+(4) As an admin, I want to see the current stock quantity of each product so that I can identify shortages and avoid overselling.
+(5) As an admin, I want the system to prevent invalid stock updates so that product quantities never become negative.
+(6) As a partner, I want to log in to my account so that I can securely access my own inventory data.
+(7) As a partner, I want to see a list of my assigned products so that I can track what is available in my store.
+(8) As a partner, I want to update stock quantities for my products so that the system reflects current inventory levels.
+(9) As a partner, I want to create a new product entry so that I can register products that are not yet in the system.
 
-### Use Case
+
+### Use Case fluxTrack
 
 ![](images/use-case.png)
 
-- UC-1 [Show all the Pizza]: Admin can retrieve all the pizza on the menu
-- UC-2 [Show a Pizza]: Admin can retrieve the information on a specific pizza.
-- UC-3 [Edit a Pizza]: Admin can create, update, and delete pizzas from the menu.
-- UC-4 [Show Current Location Offer]: User can retrieve special menu by location
+- UC-1 [Show all the Products]: Admin can retrieve all the Products on the product range
+- UC-2 [Show a Product]: Admin can retrieve the information on a specific product.
+- UC-3 [Edit a Product]: Admin can create, update, and delete products from the product range.
+- UC-4 [Show Current Stock Levels]: Partner can retrieve product stock levels
 
 ## Design
 > 🚧: Keep in mind the Corporate Identity (CI); you shall decide appropriately the color schema, graphics, typography, layout, User Experience (UX), and so on.
