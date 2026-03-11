@@ -1,6 +1,6 @@
 # fluxTrack Inventory Management System
 
-fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. In the Internet Technology implementation, the demonstrator focuses on partner login, product listing, product creation, stock adjustment, and basic search/filter functions. External Shopify synchronization is represented as a simplified integration boundary. The different partners of fluxed GmbH get different access to the web tool via different (database) access roles.
+fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. The goal of the system is to reduce manual work, improve inventory transparency, and synchronize relevant stock data with the fluxed web shop. In the Internet Technology demonstrator, the focus is on partner login, product overview, product creation, stock adjustment, search/filter functions, and a simplified Shopify integration boundary. Different users of fluxed GmbH and its partners can receive different access rights based on their application role. 
 
 #### Contents:
 - [Analysis](#analysis)
@@ -19,13 +19,13 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
   - [Milestones](#milestones)
 
 ## Analysis
-> 🚧: You can reuse the analysis (you made) from other projects (e.g., requirement engineering), but it must be submitted according to the following template.
+The original project idea comes from the need of fluxed GmbH to replace manual stock communication between the company and its partners. In the existing process, partners still communicate inventory changes manually, for example through Excel sheets, e-mail, or chat. This leads to delays, missing transparency, and situations where products may still appear purchasable although they are no longer in stock. The purpose of fluxTrack is therefore to provide a central inventory management system with real-time or near-real-time stock visibility and easier maintenance of product data. 
 
-
+The assessment also requires that the application demonstrates at least three layers on two tiers, at least four views, at least four entities, and at least one business rule in the service layer. The fluxTrack concept matches this very well, because it already defines a web client, backend logic, database interaction, several product- and account-related use cases, and Shopify-related data exchange.
 
 ### Scenario
 
-fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. In the Internet Technology implementation, the demonstrator focuses on partner login, product listing, product creation, stock adjustment, and basic search/filter functions. External Shopify synchronization is represented as a simplified integration boundary. The different partners of fluxed GmbH get different access to the web tool via different (database) access roles.
+fluxTrack is a lightweight inventory management demonstrator for fluxed GmbH and its partners. Partners log into a private web application to view their products, create new product entries, adjust stock quantities, and search or filter their portfolio. fluxed GmbH can access a broader overview across partner portfolios. The system is designed to reduce manual communication, improve product data quality, and support later integration with Shopify for stock synchronization and order-related updates.
 
 ### User Stories
 (1) As an admin, I want to view lists of products, partners, and stock updates so that I can monitor inventory data efficiently.
