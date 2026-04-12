@@ -39,10 +39,14 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ### Use Case fluxTrack
 
 ![](images/use-case.png)
-- UC-1 [Show all the Products]: Admin can retrieve all the Products on the product range
-- UC-2 [Show a Product]: Admin can retrieve the information on a specific product.
-- UC-3 [Edit a Product]: Admin can create, update, and delete products from the product range.
-- UC-4 [Show Current Stock Levels]: Partner can retrieve product stock levels
+- UC-1 [Show all the Products (Admin)]: Admin can retrieve all the Products on the product range from all Partners.
+- UC-2 [Show all the Products (Partner)]: Partner can retreive all the Products listed under the Partner's profile.
+- UC-3 [Create a Product]: Admin and Partner can create new product entries in the application.
+- UC-4 [Show a Product]: Admin and Partner can retrieve the information on a specific product.
+- UC-5 [Edit a Product]: Admin and Partner can create, update, and delete products from the product range.
+- UC-6 [Create a Partner]: Admin can create new Partner Profiles.
+- UC-7 [Edit Partner Profile]: Admin and Partner can Edit Partner Profiles.
+- UC-8 [Show all Partners]: Admin can see an overview of all Partners.
 
 ## Design
 > 🚧: Keep in mind the Corporate Identity (CI); you shall decide appropriately the color schema, graphics, typography, layout, User Experience (UX), and so on.
@@ -65,11 +69,10 @@ The `ch.fhnw.pizza.data.domain` package contains the following domain objects / 
 ### Business Logic 
 > 🚧: Describe the business logic for **at least one business service** in detail. If available, show the expected path and HTPP method. The remaining documentation of APIs shall be made available in the swagger endpoint. The default Swagger UI page is available at /swagger-ui.html.
 
-Based on the UC-4, there will be two offers and a standard offer. Given a location, a message is shown accordingly:
+Based on the Use case description, there will be two user profiles, which have different roles and privileges.
 
-- If the location is "Basel", the message is "10% off on all large pizzas!!!"
-- If the location is "Brugg", the message is "two for the price of One on all small pizzas!!!"
-- Otherwise, the message is "No special offer".
+- The Admin is able to see all products of all partners
+- The Partner is only able to see the products listed under his profile
 
 **Path**: [`/api/menu/?location="Basel"`] 
 
@@ -165,8 +168,10 @@ Alternatively, you can deploy your application to a free PaaS like [Render](http
 
 
 #### Maintainer
-- Charuta Pande
-- Devid Montecchiari
+- Fabian Arnold
+- Remy Brunner
+- Silvan Meier
+- Florian Stiegeler
 
 #### License
 - [Apache License, Version 2.0](blob/master/LICENSE)
