@@ -26,15 +26,14 @@ The assessment also requires that the application demonstrates at least three la
 fluxTrack is a web application for fluxed GmbH and its partners to manage product inventory centrally. The goal of the system is to reduce manual work, improve inventory transparency, and synchronize relevant stock data with the fluxed web shop. In the Internet Technology demonstrator, the focus is on partner login, product overview, product creation, stock adjustment, search/filter functions, and a simplified Shopify integration boundary. Different users of fluxed GmbH and its partners can receive different access rights based on their application role. 
 
 ### User Stories
-(1) As an admin, I want to view lists of products, partners, and stock updates so that I can monitor inventory data efficiently.
-(2) As an admin, I want to create and edit products and partner data so that I can maintain correct business information in the system.
-(3) As an admin, I want to review stock change history so that I can understand when and why inventory levels were updated.
-(4) As an admin, I want to see the current stock quantity of each product so that I can identify shortages and avoid overselling.
-(5) As an admin, I want the system to prevent invalid stock updates so that product quantities never become negative.
-(6) As a partner, I want to log in to my account so that I can securely access my own inventory data.
-(7) As a partner, I want to see a list of my assigned products so that I can track what is available in my store.
-(8) As a partner, I want to update stock quantities for my products so that the system reflects current inventory levels.
-(9) As a partner, I want to create a new product entry so that I can register products that are not yet in the system.
+(1) As an admin, I want to view all products across all partners, so that I can have a complete overview of the product range.
+(2) As a partner, I want to view all products under my profile, so that I can manage and review my own product listings.
+(3) As an admin or partner, I want to create new product entries, so that I can expand the product range available in the application.
+(4) As an admin or partner, I want to view detailed information about a specific product, so that I can understand its attributes and details.
+(5) As an admin or partner, I want to create, update, and delete products, so that I can keep the product range accurate and up to date.
+(6) As an admin, I want to create new partner profiles, so that new partners can be onboarded into the system.
+(7) As an admin or partner, I want to edit partner profiles, so that partner information remains accurate and up to date.
+(8) As an admin, I want to view all partners, so that I can have an overview of all partner profiles in the system.
 
 ### Use Case fluxTrack
 
@@ -54,10 +53,19 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ### Wireframe
 > 🚧: It is suggested to start with a wireframe. The wireframe focuses on the website structure (Sitemap planning), sketching the pages using Wireframe components (e.g., header, menu, footer) and UX. You can create a wireframe already with draw.io or similar tools. 
 
-Starting from the home page, we can visit different pages. Available public pages are visible in the menu...
+We start on the login Screen, where each user has a different login, which is linked to the profile (Partner or Admin). After Login, the user is presented with the main page, which is a product overview that either shows all products (Admin) or just the Partner specific ones (Partner).
+On the top right, the user is able to add a new product via a pop-up, where they enter Product Name, SKU, Price in CHF, the current stock quantity and an estimated delivery time. Once saved, the product will be displayed on the overview, in which existing products can be edited.
 
 ### Prototype
-> 🚧: A prototype can be designed using placeholder text/figures in Budibase. You don't need to connect the front-end to back-end in the early stages of the project development.
+
+Login Screen:
+<img width="973" height="689" alt="image" src="https://github.com/user-attachments/assets/7255a249-f960-416f-9f05-152fae2eb4c7" />
+
+Product Overview / Homepage
+<img width="936" height="664" alt="image" src="https://github.com/user-attachments/assets/ee1075c0-bc08-4ab0-8fdd-695cbe6d2c0d" />
+
+Add Product Screen
+<img width="972" height="689" alt="image" src="https://github.com/user-attachments/assets/62d658ac-b925-4c2a-b7d0-4840e4aa0fab" />
 
 ### Domain Design
 > 🚧: Provide a picture and describe your domain model; you may use Entity-Relationship Model or UML class diagram. Both can be created in Visual Paradigm - we have an academic license for it.
@@ -154,8 +162,7 @@ Alternatively, you can deploy your application to a free PaaS like [Render](http
 > 🚧: Include all the participants and briefly describe each of their **individual** contribution and/or roles. Screenshots/descriptions of your Kanban board or similar project management tools are welcome.
 
 ### Roles
-- Back-end developer: Charuta Pande 
-- Front-end developer: Devid Montecchiari
+
 
 ### Milestones
 1. **Analysis**: Scenario ideation, use case analysis and user story writing.
