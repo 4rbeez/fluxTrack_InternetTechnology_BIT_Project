@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: fluxTrack-API
+  description: This is the API for the fluxTrack inventory management software.
+  version: 0.0.2
+servers:
+- url: https://fluxtrack.com/api/v01
+tags:
+- name: inventorylist
+  description: Operations on products in inventory
+- name: partnerlist
+  description: Operations on partners
+paths:
+  /product:
+    get:
+      tags:
+      - inventorylist
+      summary: List all products
+      description: Returns all products in the inventory.
+      operationId: listProducts
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      tags:
+      - inventorylist
+      summary: Create a product
+      description: Creates a new product in the inventory.
+      operationId: createProduct
+      requestBody:
+        $ref: "#/components/requestBodies/Product"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Invalid input
+  /product/{productID}:
+    get:
+      tags:
+      - inventorylist
+      summary: Get a product by ID
+      description: Returns a single product.
+      operationId: getProductById
+      parameters:
+      - name: productID
+        in: path
+        description: ID of the product
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+    put:
+      tags:
+      - inventorylist
+      summary: Update a product
+      description: Updates an existing product.
+      operationId: updateProduct
+      parameters:
+      - name: productID
+        in: path
+        description: ID of the product
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        $ref: "#/components/requestBodies/Product"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Invalid input
+        "404":
+          description: Product not found
+    delete:
+      tags:
+      - inventorylist
+      summary: Delete a product
+      description: Deletes a product by ID.
+      operationId: deleteProduct
+      parameters:
+      - name: productID
+        in: path
+        description: ID of the product
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Product deleted
+        "404":
+          description: Product not found
+  /partner:
+    get:
+      tags:
+      - partnerlist
+      summary: List all partners
+      description: Returns all partners.
+      operationId: listPartners
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Partner"
+    post:
+      tags:
+      - partnerlist
+      summary: Create a partner
+      description: Creates a new partner.
+      operationId: createPartner
+      requestBody:
+        $ref: "#/components/requestBodies/Partner"
+      responses:
+        "201":
+          description: Partner created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+        "400":
+          description: Invalid input
+  /partner/{partnerID}:
+    get:
+      tags:
+      - partnerlist
+      summary: Get a partner by ID
+      description: Returns a single partner.
+      operationId: getPartnerById
+      parameters:
+      - name: partnerID
+        in: path
+        description: ID of the partner
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+        "404":
+          description: Partner not found
+    put:
+      tags:
+      - partnerlist
+      summary: Update a partner
+      description: Updates an existing partner.
+      operationId: updatePartner
+      parameters:
+      - name: partnerID
+        in: path
+        description: ID of the partner
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        $ref: "#/components/requestBodies/Partner"
+      responses:
+        "200":
+          description: Partner updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+        "400":
+          description: Invalid input
+        "404":
+          description: Partner not found
+    delete:
+      tags:
+      - partnerlist
+      summary: Delete a partner
+      description: Deletes a partner by ID.
+      operationId: deletePartner
+      parameters:
+      - name: partnerID
+        in: path
+        description: ID of the partner
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Partner deleted
+        "404":
+          description: Partner not found
+components:
+  schemas:
+    Product:
+      title: Product
+      required:
+      - productName
+      - productPrice
+      - productQuantity
+      - productSKU
+      type: object
+      properties:
+        productID:
+          type: integer
+          format: int64
+          example: 10
+        productName:
+          type: string
+          example: Puzzle_1000pcs
+        productSKU:
+          type: string
+          example: ABC123
+        productPrice:
+          type: number
+          format: double
+          example: 10.95
+        productQuantity:
+          type: integer
+          example: 25
+    Partner:
+      required:
+      - partnerEmail
+      - partnerName
+      type: object
+      properties:
+        partnerID:
+          type: integer
+          format: int64
+          example: 10
+        partnerName:
+          type: string
+          example: Drachehoeli
+        partnerEmail:
+          type: string
+          format: email
+          example: drachehoeli@example.com
+        partnerPhone:
+          type: string
+          example: +41 61 123 45 67
+        partnerAddress:
+          type: array
+          items:
+            $ref: "#/components/schemas/Address"
+    Address:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Drachehoeli GmbH
+        street:
+          type: string
+          example: Hauptstrasse
+        number:
+          type: string
+          example: 10a
+        zip:
+          type: integer
+          format: int64
+          example: 4104
+        city:
+          type: string
+          example: Oberwil
+        country:
+          type: string
+          example: Switzerland
+  requestBodies:
+    Product:
+      description: Product object that needs to be added or updated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Product"
+      required: true
+    Partner:
+      description: Partner object that needs to be added or updated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Partner"
+      required: true
