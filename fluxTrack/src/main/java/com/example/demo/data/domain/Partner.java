@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class Partner {
     private List<Address> partnerAddress;
 
     // One-to-Many relationship with Product
-    @OneToMany(mappedBy = "product_partner_id")
+    @OneToMany(mappedBy = "partner")
     private List<Product> productList;
 
     // Empty Constructor for JPA
