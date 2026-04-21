@@ -12,6 +12,7 @@ import com.example.demo.business.MenuService;
 import com.example.demo.data.domain.Partner;
 import com.example.demo.data.domain.Product;
 
+
 @RestController
 @RequestMapping(path = "/menu")
 public class MenuController {
@@ -23,7 +24,7 @@ public class MenuController {
 
     // Get Product by ID
     @GetMapping(path = "/product/{id}", produces = "application/json")
-    public ResponseEntity getProductById(@PathVariable Long id) {
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         try {
             Product product = menuService.getProductById(id);
             return ResponseEntity.ok(product);
@@ -40,7 +41,7 @@ public class MenuController {
     }
 
     @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
-    public ResponseEntity addProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
         try {
             product = menuService.addProduct(product);
             return ResponseEntity.ok(product);
@@ -53,7 +54,7 @@ public class MenuController {
 
     // Update Product
     @PutMapping(path = "/product/{id}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity updateProduct(@PathVariable Long id, @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
         try {
             product = menuService.updateProduct(id, product);
             return ResponseEntity.ok(product);
@@ -65,7 +66,7 @@ public class MenuController {
 
     // Delete Product
     @DeleteMapping(path = "/product/{id}")
-    public ResponseEntity deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         try {
             menuService.deleteProduct(id);
             return ResponseEntity.ok().build(); 
@@ -79,7 +80,7 @@ public class MenuController {
 
     // Get Partner by ID
     @GetMapping(path = "/partner/{id}", produces = "application/json")
-    public ResponseEntity getPartnerById(@PathVariable Long id) {
+    public ResponseEntity<Partner> getPartnerById(@PathVariable Long id) {
         try {
             Partner partner = menuService.getPartnerById(id);
             return ResponseEntity.ok(partner);
@@ -97,7 +98,7 @@ public class MenuController {
 
     // Add Partner
     @PostMapping(path = "/partner/add", consumes = "application/json", produces = "application/json")
-    public ResponseEntity addPartner(@RequestBody Partner partner) {
+    public ResponseEntity<Partner> addPartner(@RequestBody Partner partner) {
         try {
             partner = menuService.addPartner(partner);
             return ResponseEntity.ok(partner);
@@ -110,7 +111,7 @@ public class MenuController {
 
     // Update Partner
     @PutMapping(path = "/partner/{id}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity updatePartner(@PathVariable Long id, @RequestBody Partner partner) {
+    public ResponseEntity<Partner> updatePartner(@PathVariable Long id, @RequestBody Partner partner) {
         try {
             partner = menuService.updatePartner(id, partner);
             return ResponseEntity.ok(partner);
@@ -122,7 +123,7 @@ public class MenuController {
 
     // Delete Partner
     @DeleteMapping(path = "/partner/{id}")
-    public ResponseEntity deletePartner(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePartner(@PathVariable Long id) {
         try {
             menuService.deletePartner(id);
             return ResponseEntity.ok().build(); 
