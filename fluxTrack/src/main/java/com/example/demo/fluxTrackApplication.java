@@ -18,5 +18,4 @@ public class fluxTrackApplication {
         return "Hello World";
     }
 
-
 }
