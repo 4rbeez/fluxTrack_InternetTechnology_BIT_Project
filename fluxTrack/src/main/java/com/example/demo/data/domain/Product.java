@@ -5,8 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-// import jakarta.persistence.JoinColumn;
-// import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
 
@@ -23,7 +23,7 @@ public class Product {
     private String productName;
 
     @Column(name = "product_partner_id", nullable = false)
-    private Long productPartnerId;
+    private Long productPartnerID;
 
     @Column(name = "product_SKU", nullable = false, unique = true)
     private String productSKU;
@@ -34,20 +34,20 @@ public class Product {
     @Column(name = "product_quantity", nullable = false)
     private Integer productQuantity;
 
-    // Many-to-One relationship with Partner
-    //@ManyToOne
-    //@JoinColumn(name = "product_partner_id", insertable = false, updatable = false)
-    //private Partner partner;
+    //Many-to-One relationship with Partner
+    @ManyToOne
+    @JoinColumn(name = "product_partner_id", insertable = false, updatable = false)
+    private Partner partner;
 
     // Empty Constructor for JPA
     public Product() {
     }
 
     // Full Constructor - might not be needed
-    public Product(Long productID, String productName, Long productPartnerId, String productSKU, Double productPrice, Integer productQuantity) {
+    public Product(Long productID, String productName, Long productPartnerID, String productSKU, Double productPrice, Integer productQuantity) {
         this.productID = productID;
         this.productName = productName;
-        this.productPartnerId = productPartnerId;
+        this.productPartnerID = productPartnerID;
         this.productSKU = productSKU;
         this.productPrice = productPrice;
         this.productQuantity = productQuantity;
@@ -69,12 +69,12 @@ public class Product {
         this.productName = productName;
     }
 
-    public Long getProductPartnerId() {
-        return productPartnerId;
+    public Long getProductPartnerID() {
+        return productPartnerID;
     }
 
-    public void setProductPartnerId(Long productPartnerId) {
-        this.productPartnerId = productPartnerId;
+    public void setProductPartnerID(Long productPartnerId) {
+        this.productPartnerID = productPartnerId;
     }
 
     public String getProductSKU() {
