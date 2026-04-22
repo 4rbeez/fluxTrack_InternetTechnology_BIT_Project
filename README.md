@@ -38,14 +38,14 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ### Use Case fluxTrack
 
 ![](images/use-case.png)
-- UC-1 [Show all the Products (Admin)]: Admin can retrieve all the Products on the product range from all Partners.
-- UC-2 [Show all the Products (Partner)]: Partner can retreive all the Products listed under the Partner's profile.
-- UC-3 [Create a Product]: Admin and Partner can create new product entries in the application.
-- UC-4 [Show a Product]: Admin and Partner can retrieve the information on a specific product.
+- UC-1 [View all Products (Admin)]: Admin can retrieve all the Products on the product range from all Partners.
+- UC-2 [View Own prodcuts (Partner)]: Partner can retreive all the Products listed under the Partner's profile.
+- UC-3 [Create Product]: Admin and Partner can create new product entries in the application.
+- UC-4 [View Product Details]: Admin and Partner can retrieve the information on a specific product.
 - UC-5 [Edit a Product]: Admin and Partner can create, update, and delete products from the product range.
-- UC-6 [Create a Partner]: Admin can create new Partner Profiles.
+- UC-6 [Create Partner Profile]: Admin can create new Partner Profiles.
 - UC-7 [Edit Partner Profile]: Admin and Partner can Edit Partner Profiles.
-- UC-8 [Show all Partners]: Admin can see an overview of all Partners.
+- UC-8 [View all Partners]: Admin can see an overview of all Partners.
 
 ## Design
 > 🚧: Keep in mind the Corporate Identity (CI); you shall decide appropriately the color schema, graphics, typography, layout, User Experience (UX), and so on.
