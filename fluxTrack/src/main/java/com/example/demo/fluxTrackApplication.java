@@ -46,7 +46,9 @@ public class fluxTrackApplication {
 			testPartner.setPartnerPhone("123-456-7890");
 
 			Address testAddress = new Address();
-            testAddress.setStreet("123 Main Street");
+			testAddress.setName("Partner Name");
+            testAddress.setStreet("Main Street");
+			testAddress.setNumber("123");
             testAddress.setCity("Test City");
             testAddress.setZip(12345l);
             testAddress.setCountry("Test Country");
