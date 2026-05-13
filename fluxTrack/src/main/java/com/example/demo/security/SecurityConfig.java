@@ -47,6 +47,13 @@ public class SecurityConfig {
         return http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests( auth -> auth
+                .requestMatchers("/",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/docs",
+                                "/docs/**"
+                                ).permitAll()
                 .requestMatchers("/partner/token").hasRole("PARTNER") // only custom users with role PARTNER can request a token
                 .anyRequest().hasAuthority("SCOPE_READ") // only requests with scope inside the JWT token can access the endpoints
             )
