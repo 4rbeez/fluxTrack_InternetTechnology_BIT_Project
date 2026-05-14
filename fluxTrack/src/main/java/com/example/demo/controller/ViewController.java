@@ -1,0 +1,27 @@
+package com.example.demo.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+/**
+ * Serves Thymeleaf views. Auth happens client-side in JS using the JWT
+ * stored in localStorage (acquired via POST /partner/token).
+ */
+@Controller
+public class ViewController {
+
+    @GetMapping("/")
+    public String root() {
+        return "redirect:/login";
+    }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @GetMapping("/products")
+    public String products() {
+        return "products";
+    }
+}
