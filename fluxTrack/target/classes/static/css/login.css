@@ -54,50 +54,18 @@
 }
 .forgot-password:hover { color: var(--color-gold); }
 
-/* Brand orb */
+/* logo */
 .login-brand-section {
     display: flex; align-items: center; justify-content: center;
 }
-.brand-orb {
-    width: 100%; max-width: 480px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #5a5a5a 0%, #2a2a2a 50%, #0a0a0a 100%);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: inset 0 -20px 60px rgba(0,0,0,0.3), 0 20px 60px rgba(0,0,0,0.15);
-    position: relative;
-    overflow: hidden;
-}
-.brand-orb::before {
-    content: "";
-    position: absolute;
-    top: 8%; left: 18%;
-    width: 30%; height: 30%;
-    background: radial-gradient(ellipse, rgba(255,255,255,0.15) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-}
-.brand-content {
-    text-align: center;
-    padding: 40px;
-    color: var(--color-gold);
-    z-index: 1;
-}
-.brand-title {
-    font-size: clamp(40px, 7vw, 72px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #d4b890 0%, #b8945e 50%, #8b6a3d 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-}
-.brand-sub {
-    font-size: clamp(11px, 1.3vw, 14px);
-    margin-top: 12px;
-    color: var(--color-gold-light);
-    opacity: 0.9;
+
+.login-logo-image {
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
 /* Responsive */
