@@ -46,14 +46,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
             .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests( auth -> auth
-                .requestMatchers("/",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/docs",
-                                "/docs/**"
-                                ).permitAll()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/",
+                    "/login",
+                    "/products",
+                    "/partners",
+                    "/dashboard",
+                    "/reports",
+                    "/orders",
+                    "/tickets",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/docs",
+                    "/docs/**"
+                ).permitAll()
                 .requestMatchers("/partner/token").hasRole("PARTNER") // only custom users with role PARTNER can request a token
                 .anyRequest().hasAuthority("SCOPE_READ") // only requests with scope inside the JWT token can access the endpoints
             )
@@ -61,7 +72,7 @@ public class SecurityConfig {
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
             .httpBasic(withDefaults())
             .build();
-    }  
+    }
 
     @Bean
     JwtEncoder jwtEncoder() {
@@ -71,8 +82,7 @@ public class SecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         byte[] bytes = jwtKey.getBytes();
-        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length,"RSA");
+        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "RSA");
         return NimbusJwtDecoder.withSecretKey(originalKey).macAlgorithm(MacAlgorithm.HS512).build();
     }
-
 }
