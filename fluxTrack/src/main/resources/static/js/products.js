@@ -288,4 +288,12 @@ document.getElementById('confirm-product-delete-btn').addEventListener('click', 
 (async () => {
     await loadPartners();
     await loadProducts();
+ 
+    // Pre-fill search from URL param (used when arriving from Dashboard)
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+        document.getElementById('search-input').value = searchParam;
+        applySearchFilter();
+    }
 })();
