@@ -9,11 +9,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.business.OrderService;
 import com.example.demo.business.PartnerService;
 import com.example.demo.business.ProductService;
 import com.example.demo.data.domain.Address;
 import com.example.demo.data.domain.Partner;
 import com.example.demo.data.domain.Product;
+
+import java.time.LocalDateTime;
 
 import jakarta.annotation.PostConstruct;
 
@@ -25,6 +28,8 @@ public class fluxTrackApplication {
 	private ProductService productService;
 	@Autowired
 	private PartnerService partnerService;
+	@Autowired
+	private OrderService orderService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(fluxTrackApplication.class, args);
@@ -85,11 +90,12 @@ public class fluxTrackApplication {
 		partnerService.addPartner(drachehöhli);
 		Long drachehöhliId = drachehöhli.getPartnerID();
 	
-		productService.addProduct(makeProduct("00501", "Drachenbluet IPA 6-Pack",        24.90, 48, drachehöhliId));
-		productService.addProduct(makeProduct("00502", "Drachenfeuer Whisky 12yr",      129.00,  4, drachehöhliId));
-		productService.addProduct(makeProduct("00503", "Höhlenbier Stout",              18.50,  0, drachehöhliId));
-		productService.addProduct(makeProduct("00504", "Drachenhonig Met",               34.00, 12, drachehöhliId));
+		productService.addProduct(makeProduct("00501", "Pokémon Day 2026 Collection (DE+EN)",        25.90, 48, drachehöhliId));
+		productService.addProduct(makeProduct("00502", "Azul",      									36.00,  4, drachehöhliId));
+		productService.addProduct(makeProduct("00503", "Magic - Lorwyn Eclipsed Draft Night (EN)",  	89.90,  0, drachehöhliId));
+		productService.addProduct(makeProduct("00504", "Naruto TCG: Special Pack EN",               	32.90, 12, drachehöhliId));
 	}
+	
 	
 	private static Product makeProduct(String sku, String name, double price, int qty, Long partnerId) {
 		Product p = new Product();
