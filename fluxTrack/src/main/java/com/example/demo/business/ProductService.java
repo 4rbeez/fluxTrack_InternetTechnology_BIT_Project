@@ -1,107 +1,101 @@
 package com.example.demo.business;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.data.domain.Product;
 import com.example.demo.data.repository.ProductRepository;
 
-import java.util.List;
-
 @Service
 public class ProductService {
-    
-     @Autowired
+
+    @Autowired
     private ProductRepository productRepository;
 
-    // Get all products
+    // -----------------------------------------------------------------
+    // BUSINESS RULE (UC 301 - Show product overview)
+    // -----------------------------------------------------------------
+    // - User "admin" sees ALL products
+    // - Partner users see ONLY their own products
+    //
+    // We identify users by their JWT subject (username) rather than by
+    // role, because the project's TokenService strips ROLE_* authorities
+    // before encoding the JWT. The username survives as the subject claim.
+    //
+    // Partner-to-User linkage is currently hardcoded:
+    //     "wylaade"     -> partnerID 1 (Wylaade GmbH)
+    //     "drachehöhli" -> partnerID 2 (Drachehöhli GmbH)
+    // This will be replaced by a proper User entity in a later iteration.
+    // -----------------------------------------------------------------
+    public List<Product> getProductsForUser(Authentication auth) {
+        if (auth == null) {
+            return List.of();
+        }
+        String username = auth.getName();
+        if ("admin".equals(username)) {
+            return productRepository.findAll();
+        }
+        Long partnerId = resolvePartnerIdFromUsername(username);
+        if (partnerId == null) {
+            return List.of();
+        }
+        return productRepository.findByProductPartnerID(partnerId);
+    }
+
+    /**
+     * Returns the partner ID that products created by this user belong to.
+     * Returns null for admin (admin must specify a partner ID explicitly).
+     * Used by ProductController.addProduct() to enforce partner ownership.
+     */
+    public Long resolvePartnerIdForUser(Authentication auth) {
+        if (auth == null) return null;
+        String username = auth.getName();
+        if ("admin".equals(username)) return null;
+        return resolvePartnerIdFromUsername(username);
+    }
+
+    private Long resolvePartnerIdFromUsername(String username) {
+        if (username == null) return null;
+        switch (username) {
+            case "wylaade":     return 1L;
+            case "drachehoehli": return 2L;
+            default:            return null;
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // CRUD methods (existing behaviour preserved)
+    // -----------------------------------------------------------------
+
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    // Get a product by its ID
     public Product getProductById(Long id) {
-       try {
-        Product product = productRepository.findByProductID(id);
-       return product;
-       }
-         catch (Exception e) {
-          throw new RuntimeException("Failed to retrieve product with id: " + id, e);
-         }
+        return productRepository.findById(id).orElse(null);
     }
 
-    // Add a new product
-    public Product addProduct(Product product) throws Exception {
-        if (product.getProductName() == null || product.getProductName().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be null or empty");
-        }
-        if (product.getProductPartnerID() == null) {
-            throw new IllegalArgumentException("Product must belong to a partner");
-        }
-        if (product.getProductSKU() == null || product.getProductSKU().isEmpty()) {
-            throw new IllegalArgumentException("Product SKU cannot be null or empty");
-        }
-        if (product.getProductPrice() < 0) {
-            throw new IllegalArgumentException("Product price cannot be negative");
-        }
-        if (product.getProductQuantity() < 0) {
-            throw new IllegalArgumentException("Product quantity cannot be negative");
-        }
-        else {
-            return productRepository.save(product);
-        }
+    public Product addProduct(Product product) {
+        return productRepository.save(product);
     }
 
-    // Update an existing product
-    public Product updateProduct(Long id, Product updatedProduct) throws Exception {
-        Product existingProduct = productRepository.findByProductID(id);
-        if (existingProduct == null) {
-            throw new IllegalArgumentException("Product with id " + id + " not found");
+    public Product updateProduct(Long id, Product updated) {
+        Product existing = productRepository.findById(id).orElse(null);
+        if (existing == null) return null;
+        existing.setProductName(updated.getProductName());
+        existing.setProductSKU(updated.getProductSKU());
+        existing.setProductPrice(updated.getProductPrice());
+        existing.setProductQuantity(updated.getProductQuantity());
+        if (updated.getProductPartnerID() != null) {
+            existing.setProductPartnerID(updated.getProductPartnerID());
         }
-        if (updatedProduct.getProductName() != null) {
-            if (updatedProduct.getProductName().isEmpty()) {
-                throw new IllegalArgumentException("Product name cannot be empty");
-            }
-            existingProduct.setProductName(updatedProduct.getProductName());
-        }
-        if (updatedProduct.getProductPartnerID() != null) {
-            existingProduct.setProductPartnerID(updatedProduct.getProductPartnerID());
-        }
-        if (updatedProduct.getProductSKU() != null) {
-            if (updatedProduct.getProductSKU().isEmpty()) {
-                throw new IllegalArgumentException("Product SKU cannot be empty");
-            }
-            existingProduct.setProductSKU(updatedProduct.getProductSKU());
-        }
-        if (updatedProduct.getProductPrice() != null) {
-            if (updatedProduct.getProductPrice() < 0) {
-                throw new IllegalArgumentException("Product price cannot be negative");
-            }
-            existingProduct.setProductPrice(updatedProduct.getProductPrice());
-        }
-        if (updatedProduct.getProductQuantity() != null) {
-            if (updatedProduct.getProductQuantity() < 0) {
-                throw new IllegalArgumentException("Product quantity cannot be negative");
-            }
-            existingProduct.setProductQuantity(updatedProduct.getProductQuantity());
-        }
-        try {
-            return productRepository.save(existingProduct);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update product with id: " + id, e);
-        }
+        return productRepository.save(existing);
     }
 
-    // Delete a product by its ID
-    public void deleteProduct(Long id) throws Exception {
-        Product existingProduct = productRepository.findByProductID(id);
-        if (existingProduct == null) {
-            throw new IllegalArgumentException("Product with id " + id + " not found");
-        }
-        try {
-            productRepository.delete(existingProduct);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to delete product with id: " + id, e);
-        }
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
     }
 }

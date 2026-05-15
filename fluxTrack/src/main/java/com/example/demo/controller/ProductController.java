@@ -29,9 +29,9 @@ public class ProductController {
     private ProductService productService;
 
     // Get All Products
-    @GetMapping(path = "/", produces = "application/json")
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+    @GetMapping("/")
+    public List<Product> getAllProducts(Authentication auth) {
+        return productService.getProductsForUser(auth);
     }
 
     // Get Product by ID
@@ -46,14 +46,20 @@ public class ProductController {
         } 
     }
 
-    // Add Product 
     // Add Product
     @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Product> addProduct(@RequestBody Product product, Authentication auth) {
         try {
-            if (product.getProductPartnerID() == null) {
-                product.setProductPartnerID(1L); // TODO: derive from auth.getName() once partner-user mapping exists
+            // BUSINESS RULE: partner users can only create products for themselves.
+            // For partner users, this overrides any partnerID they might try to send.
+            // For admin (returns null), allow whatever was in the body, defaulting to 1.
+            Long forcedPartnerId = productService.resolvePartnerIdForUser(auth);
+            if (forcedPartnerId != null) {
+                product.setProductPartnerID(forcedPartnerId);
+            } else if (product.getProductPartnerID() == null) {
+                product.setProductPartnerID(1L);
             }
+    
             product = productService.addProduct(product);
             return ResponseEntity.ok(product);
         } catch (Exception e) {
@@ -64,6 +70,7 @@ public class ProductController {
             );
         }
     }
+
 
 
 

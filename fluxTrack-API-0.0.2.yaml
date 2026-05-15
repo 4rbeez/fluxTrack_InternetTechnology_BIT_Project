@@ -257,11 +257,11 @@ components:
           example: 10
         partnerName:
           type: string
-          example: Drachehoeli
+          example: Drachehöhli
         partnerEmail:
           type: string
           format: email
-          example: drachehoeli@example.com
+          example: drachehöhli@example.com
         partnerPhone:
           type: string
           example: +41 61 123 45 67
@@ -274,7 +274,7 @@ components:
       properties:
         name:
           type: string
-          example: Drachehoeli GmbH
+          example: Drachehöhli GmbH
         street:
           type: string
           example: Hauptstrasse

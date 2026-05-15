@@ -9,7 +9,6 @@ import com.example.demo.data.domain.Product;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    Product findByProductID(Long productID);
-    List<Product> findAllByProductName(String productName);
-    List<Product> findAllByProductSKU(String productSKU);
+    List<Product> findByProductPartnerID(Long productPartnerID); // returns all products for a specific partner ID 
+    // (foreign key in Product entity) for user based visibility
 }
