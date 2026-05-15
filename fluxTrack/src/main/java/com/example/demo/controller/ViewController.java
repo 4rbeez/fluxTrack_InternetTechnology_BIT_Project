@@ -20,6 +20,11 @@ public class ViewController {
         return "login";
     }
 
+    @GetMapping("/dashboard")
+    public String dashboard() {
+        return "dashboard";
+    }
+
     @GetMapping("/products")
     public String products() {
         return "products";

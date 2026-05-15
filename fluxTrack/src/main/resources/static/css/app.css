@@ -382,3 +382,109 @@ button { font-family: inherit; }
     border-top: 1px solid var(--color-border-soft);
     padding-top: 16px;
 }
+
+/* Dashboard greeting under the h1 */
+.dashboard-greeting {
+    margin: 6px 0 0 0;
+    color: var(--color-text-muted);
+    font-size: 15px;
+}
+
+/* Stat card grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.stat-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--color-gold);
+}
+.stat-card-danger::before { background: var(--color-danger-text); }
+
+.stat-card-loading {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.stat-card-icon {
+    color: var(--color-gold);
+    margin-bottom: 8px;
+}
+.stat-card-danger .stat-card-icon { color: var(--color-danger-text); }
+
+.stat-card-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.stat-card-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+.stat-card-danger .stat-card-value { color: var(--color-danger-text); }
+
+.stat-card-sub {
+    font-size: 13px;
+    color: var(--color-text-light);
+    margin-top: 6px;
+}
+
+.stat-card-wide .stat-card-value { font-size: 26px; }
+
+/* Dashboard sections */
+.dashboard-section {
+    margin-top: 24px;
+}
+.dashboard-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-gold);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+}
+.dashboard-section-title svg { color: var(--color-gold); }
+
+.dashboard-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: 0;
+    padding: 14px 0;
+}
+.dashboard-empty-success { color: var(--color-success-text); font-style: normal; }
+
+.dashboard-table tbody tr.row-clickable {
+    cursor: pointer;
+}
+.dashboard-table tbody tr.row-clickable:hover {
+    background: #fafbfc;
+}
+
+.link-cta {
+    color: var(--color-gold);
+    font-weight: 600;
+    font-size: 13px;
+}
