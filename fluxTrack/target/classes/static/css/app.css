@@ -325,3 +325,60 @@ button { font-family: inherit; }
     .data-table th, .data-table td { padding: 10px 6px; font-size: 13px; }
     .search-input { min-width: 0; }
 }
+
+/* Sidebar: keep .hidden working everywhere */
+.hidden { display: none !important; }
+
+/* Danger button (delete confirm) */
+.btn-danger {
+    background: var(--color-danger-text);
+    color: white;
+}
+.btn-danger:hover { background: #8a2424; }
+
+/* Small modal variant for confirmations */
+.modal-small { width: 420px; }
+.confirm-message {
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+}
+
+/* Row-level edit/delete action buttons */
+.row-action {
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    margin: 0 2px;
+    font-size: 14px;
+    color: var(--color-text);
+    transition: background 0.15s, border-color 0.15s;
+}
+.row-action:hover { background: var(--color-border-soft); border-color: var(--color-gold-light); }
+.row-action.delete-btn:hover {
+    background: var(--color-danger);
+    color: var(--color-danger-text);
+    border-color: var(--color-danger-text);
+}
+.row-clickable { cursor: pointer; }
+
+/* Multi-column form rows for the address fields */
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+.form-row .form-group { margin-bottom: 16px; }
+.form-group-grow { flex: 1 1 auto; }
+.form-group-shrink { flex: 0 0 110px; }
+
+/* Section heading inside a modal form */
+.form-section-title {
+    margin: 20px 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-top: 1px solid var(--color-border-soft);
+    padding-top: 16px;
+}

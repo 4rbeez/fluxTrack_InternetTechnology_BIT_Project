@@ -102,17 +102,22 @@ if (loginForm) {
     });
 }
 
-// =============================================================
 // Topbar: company name + logout (present on app pages)
-// =============================================================
 const companyNameEl = document.getElementById('company-name');
 if (companyNameEl && getUser()) {
-    // For now we just display the username. Once partner-user mapping
-    // exists in the backend, swap this for the partner company name.
     companyNameEl.textContent = getUser();
 }
-
+ 
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
+}
+ 
+// Hide admin-only sidebar items for non-admin users.
+// The Partners link is marked with id="sidebar-partners" in the fragment.
+if (getUser() && getUser() !== 'admin') {
+    const partnersLink = document.getElementById('sidebar-partners');
+    if (partnersLink) {
+        partnersLink.classList.add('hidden');
+    }
 }

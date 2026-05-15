@@ -24,4 +24,9 @@ public class ViewController {
     public String products() {
         return "products";
     }
+
+    @GetMapping("/partners")
+    public String partners() {
+        return "partners";
+    }
 }

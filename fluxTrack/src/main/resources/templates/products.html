@@ -5,7 +5,7 @@
 </head>
 <body>
 <div class="app-layout">
-    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+    <div th:replace="~{fragments/sidebar :: sidebar('products')}"></div>
     <div class="main-area">
         <div th:replace="~{fragments/topbar :: topbar}"></div>
         <main class="content">
@@ -69,7 +69,6 @@
                 <label for="productSKU">SKU<span class="required">*</span></label>
                 <input type="text" id="productSKU" name="productSKU" placeholder="E.g. 00083" required>
             </div>
-            <!-- Partner picker: only shown to admin (populated by JS) -->
             <div class="form-group hidden" id="partner-picker-group">
                 <label for="productPartnerID">Partner<span class="required">*</span></label>
                 <select id="productPartnerID" name="productPartnerID">
