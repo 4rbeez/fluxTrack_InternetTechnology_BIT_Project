@@ -99,15 +99,15 @@ public class ProductController {
     }
 
     // Delete Product
-    @DeleteMapping(path = "/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        try {
-            productService.deleteProduct(id);
-            return ResponseEntity.ok().build(); 
-        } 
-        catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with given id: " + id, e);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id, Authentication auth) {
+        boolean deleted = productService.deleteProductForUser(id, auth);
+        if (deleted) {
+            return ResponseEntity.noContent().build();   // 204
         }
+        // Either the product doesn't exist, or this user doesn't own it.
+        // We return 403 for both cases so we don't leak existence info to non-owners.
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete this product");
     }
 
 }

@@ -7,6 +7,7 @@
 //   - +/- quantity adjustment (PUT /product/{id})
 //   - "Add new product" modal (POST /product/add)
 //   - Admin-only partner picker in the modal
+//   - Delete product with confirmation (DELETE /product/{id})
 // =============================================================
 
 requireAuth();
@@ -14,6 +15,7 @@ requireAuth();
 let allProducts = [];
 const partnerLookup = {};   // { partnerID: partnerName }
 const isAdmin = getUser() === 'admin';
+let pendingProductDeleteId = null;
 
 // -------------------------------------------------------------
 // Data loading
@@ -25,7 +27,6 @@ async function loadPartners() {
         const partners = await res.json();
         partners.forEach(p => { partnerLookup[p.partnerID] = p.partnerName; });
 
-        // Populate the admin-only partner picker in the modal
         if (isAdmin) {
             const select = document.getElementById('productPartnerID');
             const group = document.getElementById('partner-picker-group');
@@ -48,14 +49,14 @@ async function loadProducts() {
         const res = await authFetch('/product/');
         if (!res) return;
         if (!res.ok) {
-            tbody.innerHTML = `<tr><td colspan="8" class="table-empty">Failed to load products (HTTP ${res.status})</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load products (HTTP ${res.status})</td></tr>`;
             return;
         }
         allProducts = await res.json();
         applySearchFilter();
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="8" class="table-empty">Failed to load products</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load products</td></tr>`;
     }
 }
 
@@ -65,7 +66,7 @@ async function loadProducts() {
 function renderProducts(products) {
     const tbody = document.getElementById('products-tbody');
     if (!products.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No products found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="table-empty">No products found</td></tr>`;
         return;
     }
     tbody.innerHTML = products.map(p => {
@@ -89,6 +90,9 @@ function renderProducts(products) {
                     <span class="status-pill ${inStock ? 'in-stock' : 'out-of-stock'}">
                         ${inStock ? 'In Stock' : 'Out of Stock'}
                     </span>
+                </td>
+                <td>
+                    <button class="row-action product-delete-btn" data-id="${p.productID}" title="Delete">🗑</button>
                 </td>
             </tr>`;
     }).join('');
@@ -130,9 +134,15 @@ document.getElementById('search-input').addEventListener('input', applySearchFil
 document.getElementById('filter-select').addEventListener('change', applySearchFilter);
 
 // -------------------------------------------------------------
-// +/- quantity buttons
+// Row actions: quantity buttons + delete button (event delegation)
 // -------------------------------------------------------------
 document.getElementById('products-tbody').addEventListener('click', async (e) => {
+    const deleteBtn = e.target.closest('.product-delete-btn');
+    if (deleteBtn) {
+        openProductDeleteModal(deleteBtn.dataset.id);
+        return;
+    }
+
     const btn = e.target.closest('.qty-btn');
     if (!btn || btn.disabled) return;
 
@@ -203,7 +213,6 @@ productForm.addEventListener('submit', async (e) => {
         productQuantity: parseInt(document.getElementById('productQuantity').value, 10),
     };
 
-    // Admin: include the chosen partner ID. Partner users: backend forces their own.
     if (isAdmin) {
         const partnerIdRaw = document.getElementById('productPartnerID').value;
         if (!partnerIdRaw) {
@@ -232,6 +241,44 @@ productForm.addEventListener('submit', async (e) => {
         await loadProducts();
     } else {
         errorDiv.textContent = `Could not create product${res ? ` (HTTP ${res.status})` : ''}. Check that all fields are valid.`;
+    }
+});
+
+// -------------------------------------------------------------
+// Delete Product modal
+// -------------------------------------------------------------
+const deleteModal     = document.getElementById('product-delete-modal');
+const deleteMessageEl = document.getElementById('product-delete-message');
+const deleteErrorEl   = document.getElementById('product-delete-error');
+
+document.getElementById('cancel-product-delete-btn').addEventListener('click', closeProductDeleteModal);
+deleteModal.addEventListener('click', (e) => {
+    if (e.target === deleteModal) closeProductDeleteModal();
+});
+
+function openProductDeleteModal(id) {
+    const product = allProducts.find(p => String(p.productID) === String(id));
+    if (!product) return;
+    pendingProductDeleteId = id;
+    deleteMessageEl.textContent = `Are you sure you want to delete "${product.productName}" (SKU ${product.productSKU})? This cannot be undone.`;
+    deleteErrorEl.textContent = '';
+    deleteModal.classList.remove('hidden');
+}
+
+function closeProductDeleteModal() {
+    pendingProductDeleteId = null;
+    deleteModal.classList.add('hidden');
+    deleteErrorEl.textContent = '';
+}
+
+document.getElementById('confirm-product-delete-btn').addEventListener('click', async () => {
+    if (!pendingProductDeleteId) return;
+    const res = await authFetch(`/product/${pendingProductDeleteId}`, { method: 'DELETE' });
+    if (res && res.ok) {
+        closeProductDeleteModal();
+        await loadProducts();
+    } else {
+        deleteErrorEl.textContent = `Could not delete product${res ? ` (HTTP ${res.status})` : ''}.`;
     }
 });
 

@@ -16,19 +16,10 @@ public class ProductService {
     private ProductRepository productRepository;
 
     // -----------------------------------------------------------------
-    // BUSINESS RULE (UC 301 - Show product overview)
+    // BUSINESS RULE 1 (UC 301 - Show product overview)
     // -----------------------------------------------------------------
     // - User "admin" sees ALL products
     // - Partner users see ONLY their own products
-    //
-    // We identify users by their JWT subject (username) rather than by
-    // role, because the project's TokenService strips ROLE_* authorities
-    // before encoding the JWT. The username survives as the subject claim.
-    //
-    // Partner-to-User linkage is currently hardcoded:
-    //     "wylaade"     -> partnerID 1 (Wylaade GmbH)
-    //     "drachehöhli" -> partnerID 2 (Drachehöhli GmbH)
-    // This will be replaced by a proper User entity in a later iteration.
     // -----------------------------------------------------------------
     public List<Product> getProductsForUser(Authentication auth) {
         if (auth == null) {
@@ -46,9 +37,8 @@ public class ProductService {
     }
 
     /**
-     * Returns the partner ID that products created by this user belong to.
-     * Returns null for admin (admin must specify a partner ID explicitly).
-     * Used by ProductController.addProduct() to enforce partner ownership.
+     * Used by ProductController.addProduct() to enforce partner ownership on create.
+     * Returns null for admin (admin must specify partner ID explicitly).
      */
     public Long resolvePartnerIdForUser(Authentication auth) {
         if (auth == null) return null;
@@ -64,6 +54,33 @@ public class ProductService {
             case "drachehoehli": return 2L;
             default:            return null;
         }
+    }
+
+    // -----------------------------------------------------------------
+    // BUSINESS RULE 2 (UC 5 - Delete a Product)
+    // -----------------------------------------------------------------
+    // - Admin can delete any product
+    // - Partner users can only delete products they own
+    // Returns false if the deletion was denied or the product does not exist.
+    // -----------------------------------------------------------------
+    public boolean deleteProductForUser(Long productId, Authentication auth) {
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null) return false;
+        if (auth == null) return false;
+
+        String username = auth.getName();
+        if ("admin".equals(username)) {
+            productRepository.deleteById(productId);
+            return true;
+        }
+
+        Long callerPartnerId = resolvePartnerIdFromUsername(username);
+        if (callerPartnerId == null) return false;
+        if (!callerPartnerId.equals(product.getProductPartnerID())) {
+            return false; // Partner trying to delete someone else's product
+        }
+        productRepository.deleteById(productId);
+        return true;
     }
 
     // -----------------------------------------------------------------

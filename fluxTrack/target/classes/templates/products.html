@@ -45,10 +45,11 @@
                             <th>Quantity</th>
                             <th>Modify Quantity</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="products-tbody">
-                        <tr><td colspan="8" class="table-empty">Loading...</td></tr>
+                        <tr><td colspan="9" class="table-empty">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -89,6 +90,19 @@
             </div>
             <div id="form-error" class="form-error" role="alert"></div>
         </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="product-delete-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content modal-small">
+        <h2>Delete product?</h2>
+        <p id="product-delete-message" class="confirm-message">Are you sure?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-gold-light" id="cancel-product-delete-btn">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirm-product-delete-btn">Delete</button>
+        </div>
+        <div id="product-delete-error" class="form-error" role="alert"></div>
     </div>
 </div>
 
