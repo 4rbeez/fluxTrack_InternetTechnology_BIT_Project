@@ -151,9 +151,26 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
     const product = allProducts.find(p => String(p.productID) === id);
     if (!product) return;
 
-    const newQty = Math.max(0, (product.productQuantity ?? 0) + delta);
-    if (newQty === product.productQuantity) return;
+    btn.disabled = true;
 
+    if (delta < 0) {
+        // Decrement = record a sale (creates an Order, decrements stock atomically)
+        const res = await authFetch('/order/sale', {
+            method: 'POST',
+            body: JSON.stringify({ productID: product.productID, quantity: 1 }),
+        });
+        btn.disabled = false;
+        if (res && res.ok) {
+            product.productQuantity = Math.max(0, (product.productQuantity ?? 0) - 1);
+            applySearchFilter();
+        } else {
+            console.error('Failed to record sale', res && res.status);
+        }
+        return;
+    }
+
+    // Increment = restock (no order recorded, pure inventory PUT)
+    const newQty = (product.productQuantity ?? 0) + delta;
     const updated = {
         productID: product.productID,
         productName: product.productName,
@@ -162,14 +179,11 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
         productQuantity: newQty,
         productPartnerID: product.productPartnerID,
     };
-
-    btn.disabled = true;
     const res = await authFetch(`/product/${id}`, {
         method: 'PUT',
         body: JSON.stringify(updated),
     });
     btn.disabled = false;
-
     if (res && res.ok) {
         product.productQuantity = newQty;
         applySearchFilter();

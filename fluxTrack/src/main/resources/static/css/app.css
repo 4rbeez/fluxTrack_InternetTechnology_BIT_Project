@@ -488,3 +488,49 @@ button { font-family: inherit; }
     font-weight: 600;
     font-size: 13px;
 }
+
+/* Order summary line in the header (small grey text next to the title) */
+.order-summary {
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+.order-summary strong {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+/* Filter row for the orders page (search + date pickers + partner) */
+.filter-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.filter-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.filter-group .search-input,
+.filter-group .filter-select {
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-input-bg);
+    font-size: 14px;
+    font-family: inherit;
+    min-width: 160px;
+}
+.filter-group .search-input:focus,
+.filter-group .filter-select:focus {
+    outline: none;
+    border-color: var(--color-gold);
+    background: white;
+}
