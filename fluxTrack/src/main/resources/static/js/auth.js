@@ -64,9 +64,8 @@ async function authFetch(url, options = {}) {
 // =============================================================
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
-    // If already logged in, skip the form
     if (getToken()) {
-        window.location.href = '/products';
+        window.location.href = '/dashboard';
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -82,7 +81,8 @@ if (loginForm) {
         }
 
         try {
-            const basicAuth = btoa(`${username}:${password}`);
+            // UTF-8 safe base64 for usernames/passwords with non-ASCII characters
+            const basicAuth = btoa(unescape(encodeURIComponent(`${username}:${password}`)));
             const response = await fetch('/partner/token', {
                 method: 'POST',
                 headers: { 'Authorization': `Basic ${basicAuth}` },
@@ -95,26 +95,27 @@ if (loginForm) {
             const token = (await response.text()).trim();
             if (!token) throw new Error('Empty token returned by server');
             setAuth(token, username);
-            window.location.href = '/products';
+            window.location.href = '/dashboard';
         } catch (err) {
             errorDiv.textContent = err.message;
         }
     });
 }
 
+// =============================================================
 // Topbar: company name + logout (present on app pages)
+// =============================================================
 const companyNameEl = document.getElementById('company-name');
 if (companyNameEl && getUser()) {
     companyNameEl.textContent = getUser();
 }
- 
+
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
 }
- 
+
 // Hide admin-only sidebar items for non-admin users.
-// The Partners link is marked with id="sidebar-partners" in the fragment.
 if (getUser() && getUser() !== 'admin') {
     const partnersLink = document.getElementById('sidebar-partners');
     if (partnersLink) {
