@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,8 +14,6 @@ import com.example.demo.business.ProductService;
 import com.example.demo.data.domain.Address;
 import com.example.demo.data.domain.Partner;
 import com.example.demo.data.domain.Product;
-import com.example.demo.data.repository.PartnerRepository;
-import com.example.demo.data.repository.ProductRepository;
 
 import jakarta.annotation.PostConstruct;
 
