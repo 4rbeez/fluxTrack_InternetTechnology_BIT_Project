@@ -6,12 +6,14 @@
 //   - search + filter
 //   - +/- quantity adjustment (PUT /product/{id})
 //   - "Add new product" modal (POST /product/add)
+//   - Admin-only partner picker in the modal
 // =============================================================
 
 requireAuth();
 
 let allProducts = [];
 const partnerLookup = {};   // { partnerID: partnerName }
+const isAdmin = getUser() === 'admin';
 
 // -------------------------------------------------------------
 // Data loading
@@ -22,6 +24,19 @@ async function loadPartners() {
         if (!res || !res.ok) return;
         const partners = await res.json();
         partners.forEach(p => { partnerLookup[p.partnerID] = p.partnerName; });
+
+        // Populate the admin-only partner picker in the modal
+        if (isAdmin) {
+            const select = document.getElementById('productPartnerID');
+            const group = document.getElementById('partner-picker-group');
+            partners.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.partnerID;
+                opt.textContent = p.partnerName;
+                select.appendChild(opt);
+            });
+            group.classList.remove('hidden');
+        }
     } catch (err) {
         console.error('Failed to load partners', err);
     }
@@ -88,7 +103,7 @@ function escapeHtml(str) {
 }
 
 // -------------------------------------------------------------
-// Search & filter (client-side, on already-loaded products)
+// Search & filter
 // -------------------------------------------------------------
 function applySearchFilter() {
     const term = document.getElementById('search-input').value.trim().toLowerCase();
@@ -115,7 +130,7 @@ document.getElementById('search-input').addEventListener('input', applySearchFil
 document.getElementById('filter-select').addEventListener('change', applySearchFilter);
 
 // -------------------------------------------------------------
-// +/- quantity buttons (event delegation on tbody)
+// +/- quantity buttons
 // -------------------------------------------------------------
 document.getElementById('products-tbody').addEventListener('click', async (e) => {
     const btn = e.target.closest('.qty-btn');
@@ -129,7 +144,6 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
     const newQty = Math.max(0, (product.productQuantity ?? 0) + delta);
     if (newQty === product.productQuantity) return;
 
-    // Build the full Product body for PUT
     const updated = {
         productID: product.productID,
         productName: product.productName,
@@ -188,6 +202,16 @@ productForm.addEventListener('submit', async (e) => {
         productPrice: parseFloat(document.getElementById('productPrice').value),
         productQuantity: parseInt(document.getElementById('productQuantity').value, 10),
     };
+
+    // Admin: include the chosen partner ID. Partner users: backend forces their own.
+    if (isAdmin) {
+        const partnerIdRaw = document.getElementById('productPartnerID').value;
+        if (!partnerIdRaw) {
+            errorDiv.textContent = 'Please select a partner.';
+            return;
+        }
+        newProduct.productPartnerID = parseInt(partnerIdRaw, 10);
+    }
 
     if (!newProduct.productName || !newProduct.productSKU) {
         errorDiv.textContent = 'Product Name and SKU are required.';

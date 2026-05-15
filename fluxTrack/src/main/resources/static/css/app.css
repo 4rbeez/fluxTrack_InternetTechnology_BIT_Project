@@ -45,6 +45,7 @@
    ============================================ */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: var(--color-text); background: var(--color-bg); -webkit-font-smoothing: antialiased; }
+.hidden { display: none !important; }
 h1, h2, h3 { font-weight: 700; }
 a { color: inherit; }
 button { font-family: inherit; }
