@@ -32,7 +32,11 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return new InMemoryUserDetailsManager(
-            User.withUsername("partner")
+            User.withUsername("wylaade")
+                .password("{noop}password")
+                .roles("PARTNER")
+                .build(),
+            User.withUsername("drachehoehli")
                 .password("{noop}password")
                 .roles("PARTNER")
                 .build(),
@@ -65,8 +69,8 @@ public class SecurityConfig {
                     "/docs",
                     "/docs/**"
                 ).permitAll()
-                .requestMatchers("/partner/token").hasRole("PARTNER") // only custom users with role PARTNER can request a token
-                .anyRequest().hasAuthority("SCOPE_READ") // only requests with scope inside the JWT token can access the endpoints
+                .requestMatchers("/partner/token").hasRole("PARTNER")
+                .anyRequest().hasAuthority("SCOPE_READ")
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
