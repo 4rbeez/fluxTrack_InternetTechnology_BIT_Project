@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+
 
 import com.example.demo.business.ProductService;
 import com.example.demo.data.domain.Product;
@@ -44,17 +47,37 @@ public class ProductController {
     }
 
     // Add Product 
+    // Add Product
     @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> addProduct(@RequestBody Product product, Authentication auth) {
         try {
+            if (product.getProductPartnerID() == null) {
+                product.setProductPartnerID(1L); // TODO: derive from auth.getName() once partner-user mapping exists
+            }
             product = productService.addProduct(product);
             return ResponseEntity.ok(product);
-        } 
-        catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to add product: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Failed to add product: " + e.getMessage(),
+                e
+            );
         }
-        
     }
+
+
+
+    // @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
+    // public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+    //     try {
+    //         product = productService.addProduct(product);
+    //         return ResponseEntity.ok(product);
+    //     } 
+    //     catch (Exception e) {
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to add product: " + e.getMessage(), e);
+    //     }
+        
+    // }
 
     // Update Product
     @PutMapping(path = "/{id}", consumes = "application/json", produces = "application/json")

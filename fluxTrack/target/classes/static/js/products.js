@@ -5,7 +5,7 @@
 //   - renders the table (with computed Status from quantity)
 //   - search + filter
 //   - +/- quantity adjustment (PUT /product/{id})
-//   - "Add new product" modal (POST /product)
+//   - "Add new product" modal (POST /product/add)
 // =============================================================
 
 requireAuth();
@@ -18,7 +18,7 @@ const partnerLookup = {};   // { partnerID: partnerName }
 // -------------------------------------------------------------
 async function loadPartners() {
     try {
-        const res = await authFetch('/partner');
+        const res = await authFetch('/partner/');
         if (!res || !res.ok) return;
         const partners = await res.json();
         partners.forEach(p => { partnerLookup[p.partnerID] = p.partnerName; });
@@ -30,7 +30,7 @@ async function loadPartners() {
 async function loadProducts() {
     const tbody = document.getElementById('products-tbody');
     try {
-        const res = await authFetch('/product');
+        const res = await authFetch('/product/');
         if (!res) return;
         if (!res.ok) {
             tbody.innerHTML = `<tr><td colspan="8" class="table-empty">Failed to load products (HTTP ${res.status})</td></tr>`;
@@ -136,6 +136,7 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
         productSKU: product.productSKU,
         productPrice: product.productPrice,
         productQuantity: newQty,
+        productPartnerID: product.productPartnerID,
     };
 
     btn.disabled = true;
@@ -197,7 +198,7 @@ productForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const res = await authFetch('/product', {
+    const res = await authFetch('/product/add', {
         method: 'POST',
         body: JSON.stringify(newProduct),
     });
