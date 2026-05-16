@@ -866,22 +866,83 @@ button { font-family: inherit; }
     font-size: 13px;
 }
 
-/* Force the right side of the topbar to align its children vertically */
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
- 
-/* Make sure the bell button itself centers its icon */
-.bell-btn {
+/* Wrap around the bell button so the dropdown can be positioned absolute */
+.topbar-bell-wrap {
+    position: relative;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
  
-/* The bell-wrap shouldn't have margin (we use gap on the parent instead) */
-.bell-wrap {
-    margin-right: 0;
+/* The red unseen-events indicator (top-right of the bell icon) */
+.topbar-bell {
+    position: relative;   /* allows .bell-dot to anchor to it */
+}
+.bell-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 9px;
+    height: 9px;
+    background: var(--color-danger-text, #b91c1c);
+    border: 2px solid white;
+    border-radius: 50%;
 }
  
+/* The notifications dropdown */
+.bell-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 320px;
+    background: white;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    overflow: hidden;
+}
+.bell-dropdown-header {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted, #6b7280);
+    border-bottom: 1px solid var(--color-border-soft, #e5e7eb);
+    background: #fafbfc;
+}
+.bell-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.bell-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-border-soft, #e5e7eb);
+    transition: background 0.12s;
+}
+.bell-item:hover {
+    background: #fafbfc;
+}
+.bell-item.unseen {
+    background: var(--color-gold-light, #f4ead4);
+}
+.bell-item-text {
+    font-size: 13px;
+    color: var(--color-text, #111827);
+    line-height: 1.4;
+    margin-bottom: 3px;
+}
+.bell-item-time {
+    font-size: 11px;
+    color: var(--color-text-muted, #6b7280);
+}
+.bell-empty {
+    padding: 16px 14px;
+    text-align: center;
+    color: var(--color-text-muted, #6b7280);
+    font-style: italic;
+    font-size: 13px;
+}
