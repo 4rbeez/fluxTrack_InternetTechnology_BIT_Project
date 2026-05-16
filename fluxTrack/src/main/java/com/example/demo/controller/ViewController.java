@@ -39,4 +39,9 @@ public class ViewController {
     public String orders() {
         return "orders";
     }
+
+    @GetMapping("/tickets")
+    public String tickets() {
+        return "tickets";
+    }
 }
