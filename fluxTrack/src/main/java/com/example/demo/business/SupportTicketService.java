@@ -129,13 +129,13 @@ public class SupportTicketService {
         return ticketRepository.save(ticket);
     }
 
-    /** Admin reopens after the partner marked resolved: RESOLVED -> OPEN */
+    /** Admin reopens after the partner marked resolved: RESOLVED -> ANSWERED */
     public SupportTicket adminReopen(Long ticketId, String message, Authentication auth) {
         requireAdmin(auth);
         SupportTicket ticket = mustFind(ticketId);
         requireFromState(ticket, EnumSet.of(TicketState.RESOLVED));
         appendMessage(ticket, "admin", message);
-        ticket.setState(TicketState.OPEN);
+        ticket.setState(TicketState.ANSWERED);
         return ticketRepository.save(ticket);
     }
 
