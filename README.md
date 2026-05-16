@@ -44,6 +44,8 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 (7) As an admin or partner, I want to edit partner profiles, so that partner information remains accurate and up to date.
 (8) As an admin, I want to view all partners, so that I can have an overview of all partner profiles in the system.
 (9) As an admin or partner, I want to see the historical orders relevant to me, so that I can understand demand patterns over time.
+(10) As a partner, I want to raise support tickets and follow the response from fluxed, so that I can resolve technical issues affecting my inventory.
+(11) As an admin or partner, I want to see aggregated sales reports for the relevant scope, so that I can understand performance over time.
 
 
 ### Use Case fluxTrack
@@ -58,6 +60,8 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 - UC-7 [Edit Partner Profile]: Admin can edit Partner Profiles.
 - UC-8 [View all Partners]: Admin can see an overview of all Partners.
 - UC-9 [View Order History]: Admin and Partner can review historical orders, scoped by role.
+- UC-10 [Submit and follow Support Tickets]: Partner can raise tickets; admin responds and progresses each ticket through its documented lifecycle.
+- UC-11 [Generate Reports]: Admin and Partner can review aggregated sales data with a date range filter and export CSVs of the visible tables.
 
 ## Design
 > 🚧: Keep in mind the Corporate Identity (CI); you shall decide appropriately the color schema, graphics, typography, layout, User Experience (UX), and so on.
@@ -65,7 +69,7 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ### Wireframe
 > 🚧: It is suggested to start with a wireframe. The wireframe focuses on the website structure (Sitemap planning), sketching the pages using Wireframe components (e.g., header, menu, footer) and UX. You can create a wireframe already with draw.io or similar tools. 
 
-We start on the login screen, where each user has a different login, which is linked to the profile (Partner or Admin). After login, the user is presented with a Dashboard summarising inventory health (own products if Partner, all products if Admin). From there, the user can navigate via the sidebar to Products, Partners (admin only), Orders, and other planned sections.
+We start on the login screen, where each user has a different login, which is linked to the profile (Partner or Admin). After login, the user is presented with a Dashboard summarising inventory health (own products if Partner, all products if Admin). From there, the user can navigate via the sidebar to Products, Partners (admin only), Orders, Support Tickets, and Reports.
  
 On the Products page, the user can add a new product via a pop-up where they enter Product Name, SKU, Price in CHF, and current stock quantity. Once saved, the product is displayed on the overview. Existing products can be edited or deleted, and stock can be adjusted in place using +/- buttons. Each stock decrease records a sale in the Order History.
 
@@ -89,7 +93,9 @@ The `com.example.demo.data.domain` package contains the following domain objects
 - **Partner** (`@Entity`): a fluxed business partner with name, email, phone, and one or more addresses.
 - **Product** (`@Entity`): an item in the inventory with SKU, name, price, quantity, and a foreign key to its owning Partner.
 - **Order** (`@Entity`): a recorded sale of a product, with denormalised product name and partner ID for query simplicity and historical readability.
+- **SupportTicket** (`@Entity`): a partner-raised support request with subject, urgency, lifecycle state, and a conversation thread of messages.
 - **Address** (`@Embeddable`): a structured address used inside Partner.
+- **TicketMessage** (`@Embeddable`): a single message (author, content, timestamp) stored as part of a SupportTicket's conversation thread.
 > ### 🚧 Placeholder Image Domain Model
 ![](images/domain-model.png)
 
@@ -107,7 +113,7 @@ The `com.example.demo.data.domain` package contains the following domain objects
 
 **Method:** `GET` -->
 
-The application enforces three business rules in the service layer (`com.example.demo.business`), each traceable to a specific use case in the Requirements Engineering paper.
+The application enforces four business rules in the service layer (`com.example.demo.business`), each traceable to a specific use case in the Requirements Engineering paper.
  
 **Rule 1 — Role-based product visibility (UC 301)**
  
@@ -134,6 +140,18 @@ A stock decrement from the inventory UI triggers this method, which atomically v
 3. The caller owns the product (admin bypasses).
 It then creates an `Order` record with a price snapshot (`product price × quantity`) and decrements the product's stock. If any check fails, no state changes are persisted.
 
+**Rule 4 — Support ticket state transition validation (UC 107)**
+
+*Service methods:* `SupportTicketService.adminReply()`, `partnerReply()`, `markResolved()`, `adminReopen()`, `markCompleted()`
+*Endpoints:* `POST /ticket/{id}/admin-reply`, `/partner-reply`, `/resolve`, `/reopen`, `/complete`
+
+Tickets follow the state machine documented in Figure 9 of the Requirements Engineering paper: OPEN → ANSWERED → (RESOLVED | OPEN) → (COMPLETED | ANSWERED). Each transition is exposed as a dedicated service method that enforces:
+1. The required role of the actor (admin-only or partner-only);
+2. Ownership of the ticket for partner actions;
+3. The current state being a valid source for the requested transition.
+
+Invalid transitions (e.g. attempting to move a ticket from OPEN directly to RESOLVED) are rejected with HTTP 409 Conflict, ensuring the persisted state can never reach an inconsistent configuration.
+
 
 ## Implementation
 > 🚧: Briefly describe your technology stack, which apps were used and for what.
@@ -143,7 +161,7 @@ It then creates an `Order` record with a price snapshot (`product price × quant
 
 The backend is implemented as a Spring Boot REST API following a three-layer architecture on the server tier:
  
-- **Controller layer** (`com.example.demo.controller`): exposes REST endpoints, handles HTTP concerns, delegates to services.
+- **Controller layer** (`com.example.demo.controller`): exposes REST endpoints, handles HTTP concerns, delegates to services. Authentication is handled by a dedicated `AuthController` separate from the partner CRUD endpoints, isolating security concerns from business endpoints.
 - **Service layer** (`com.example.demo.business`): implements business logic and the rules described above.
 - **Persistence layer** (`com.example.demo.data.repository`): Spring Data JPA repositories backed by an H2 in-memory database.
 Security is handled by Spring Security with JWT-based stateless authentication. Tokens are issued by `POST /token` (HTTP Basic on the request, JWT in the response body) and verified on every subsequent request via the `Authorization: Bearer <token>` header. Three users are configured in-memory: `wylaade` and `drachehoehli` (role `PARTNER`), and `admin` (roles `PARTNER` + `ADMIN`).
@@ -156,7 +174,7 @@ This Web application relies on [Spring Boot](https://projects.spring.io/spring-b
 - [Spring Boot Starter Security](https://spring.io/projects/spring-security) — JWT-based auth
 - [H2 Database Engine](https://www.h2database.com) — in-memory database, runtime scope
 - [springdoc-openapi-starter-webmvc-ui](https://springdoc.org/) v2.3.0 — generates Swagger UI at `/swagger-ui.html`
-Initial test data is seeded on application startup via an `@PostConstruct` method in `fluxTrackApplication`, creating two partners (Wylaade GmbH, Drachehöhli GmbH), nine products, and fifteen historical orders spread over the past 30 days.
+Initial test data is seeded on application startup via an `@PostConstruct` method in `fluxTrackApplication`, creating two partners (Wylaade GmbH, Drachehöhli GmbH), nine products, fifteen historical orders spread over the past 30 days, and four support tickets in different lifecycle states.
 
 
 ### Frontend Technology
@@ -167,7 +185,7 @@ The frontend is a server-rendered application built with Thymeleaf and vanilla J
 - The application has a small, fixed set of views, which suits Thymeleaf's strengths (the lecturer's slides specifically call out internal dashboards as a Thymeleaf use case).
 - It keeps the entire project in a single Spring Boot deployment, with one auth setup and no separate frontend build pipeline.
 - It allows pixel-level fidelity to the Figma prototype, which would have been harder with a low-code platform.
-The frontend consists of five views, each backed by a Thymeleaf template and a vanilla JavaScript module that handles interactivity through the `fetch` API.
+The frontend consists of seven views, each backed by a Thymeleaf template and a vanilla JavaScript module that handles interactivity through the `fetch` API.
  
 | View | URL | Backend endpoints used |
 |---|---|---|
@@ -176,8 +194,14 @@ The frontend consists of five views, each backed by a Thymeleaf template and a v
 | Products | `/products` | `GET /product/`, `POST /product/add`, `PUT /product/{id}`, `DELETE /product/{id}`, `POST /order/sale` |
 | Partners | `/partners` *(admin only)* | `GET /partner/`, `POST /partner/add`, `PUT /partner/{id}`, `DELETE /partner/{id}` |
 | Order History | `/orders` | `GET /order/`, `GET /partner/` |
+| Support Tickets | `/tickets` | `GET /ticket/`, `POST /ticket/`, `POST /ticket/{id}/admin-reply`, `/partner-reply`, `/resolve`, `/reopen`, `/complete` |
+| Reports | `/reports` | `GET /order/`, `GET /partner/` |
  
 Reusable templates are defined as Thymeleaf fragments under `templates/fragments/` (head, sidebar, topbar). The sidebar accepts an `activePage` parameter to highlight the current view. Shared client logic lives in `static/js/auth.js`, which handles login, token storage in `localStorage`, an `authFetch()` wrapper that attaches the JWT to every request and redirects to `/login` on 401/403, and admin-only sidebar visibility.
+
+A dedicated `bell.js` module runs on every authenticated page (loaded via the topbar fragment) and provides a notifications indicator: it fetches the user's tickets, computes "events" the user has not yet seen based on a `localStorage` timestamp of their last visit to `/tickets`, and lights up a small red dot on the bell icon if any unseen events exist. Clicking the bell opens a dropdown of recent events, each linking back to the tickets page.
+
+The Reports view renders an SVG bar chart of daily revenue across the selected date range, computed client-side from the orders data. CSV exports are generated in-browser using a `Blob` and a synthetic anchor download, with a UTF-8 BOM so the resulting files open cleanly in Microsoft Excel including umlauts in product and partner names.
  
 Styling is implemented in `static/css/app.css` using CSS custom properties for the design tokens (gold/brown brand palette, navy login accent, status pill colours), with `static/css/login.css` providing the login page's brand orb. The design follows the Figma prototype created during the Requirements Engineering module.
 
@@ -242,7 +266,8 @@ Alternatively, you can deploy your application to a free PaaS like [Render](http
 4. **Business Logic and API Design:** Definition of business logic and REST API specification (OpenAPI).
 5. **Data and API Implementation:** Implementation of persistence, business logic, and REST controllers.
 6. **Security and Frontend Implementation:** JWT-based security, Thymeleaf templates, vanilla JavaScript frontend.
-7. **(optional) Deployment:** Deployment of the application to Render.
+7. **Feature completion:** Support ticket lifecycle, sales reports with CSV export, notifications bell.
+8. **(optional) Deployment:** Deployment of the application to Render.
 
 ## List of Aids
  
