@@ -44,4 +44,9 @@ public class ViewController {
     public String tickets() {
         return "tickets";
     }
+
+    @GetMapping("/reports")
+    public String reports() {
+        return "reports";
+    }
 }

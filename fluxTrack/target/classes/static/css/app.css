@@ -946,3 +946,45 @@ button { font-family: inherit; }
     font-style: italic;
     font-size: 13px;
 }
+
+/* Section header that contains a title + an action button (e.g. Export CSV) */
+.dashboard-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+.dashboard-section-header .dashboard-section-title {
+    margin: 0;
+}
+ 
+/* Small button variant for inline actions like Export CSV */
+.btn-small {
+    padding: 6px 14px;
+    font-size: 13px;
+}
+ 
+/* Sales chart container */
+.report-chart-container {
+    background: #fafbfc;
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 28px;
+}
+.sales-chart-svg {
+    width: 100%;
+    height: auto;
+    max-height: 320px;
+    display: block;
+}
+ 
+/* Chart bars: gold with darker hover */
+.chart-bar {
+    fill: var(--color-gold);
+    transition: fill 0.15s;
+    cursor: default;
+}
+.chart-bar:hover {
+    fill: var(--color-gold-dark);
+}
