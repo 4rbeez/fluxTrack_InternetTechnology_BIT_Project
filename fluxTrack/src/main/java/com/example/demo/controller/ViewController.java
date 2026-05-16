@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * Serves Thymeleaf views. Auth happens client-side in JS using the JWT
- * stored in localStorage (acquired via POST /partner/token).
+ * stored in localStorage (acquired via POST /token).
  */
 @Controller
 public class ViewController {

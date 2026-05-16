@@ -146,7 +146,7 @@ The backend is implemented as a Spring Boot REST API following a three-layer arc
 - **Controller layer** (`com.example.demo.controller`): exposes REST endpoints, handles HTTP concerns, delegates to services.
 - **Service layer** (`com.example.demo.business`): implements business logic and the rules described above.
 - **Persistence layer** (`com.example.demo.data.repository`): Spring Data JPA repositories backed by an H2 in-memory database.
-Security is handled by Spring Security with JWT-based stateless authentication. Tokens are issued by `POST /partner/token` (HTTP Basic on the request, JWT in the response body) and verified on every subsequent request via the `Authorization: Bearer <token>` header. Three users are configured in-memory: `wylaade` and `drachehoehli` (role `PARTNER`), and `admin` (roles `PARTNER` + `ADMIN`).
+Security is handled by Spring Security with JWT-based stateless authentication. Tokens are issued by `POST /token` (HTTP Basic on the request, JWT in the response body) and verified on every subsequent request via the `Authorization: Bearer <token>` header. Three users are configured in-memory: `wylaade` and `drachehoehli` (role `PARTNER`), and `admin` (roles `PARTNER` + `ADMIN`).
  
 This Web application relies on [Spring Boot](https://projects.spring.io/spring-boot) and the following dependencies, configured via [Spring Initializr](https://start.spring.io/):
  
@@ -171,7 +171,7 @@ The frontend consists of five views, each backed by a Thymeleaf template and a v
  
 | View | URL | Backend endpoints used |
 |---|---|---|
-| Login | `/login` | `POST /partner/token` |
+| Login | `/login` | `POST /token` |
 | Dashboard | `/dashboard` | `GET /product/`, `GET /partner/` |
 | Products | `/products` | `GET /product/`, `POST /product/add`, `PUT /product/{id}`, `DELETE /product/{id}`, `POST /order/sale` |
 | Partners | `/partners` *(admin only)* | `GET /partner/`, `POST /partner/add`, `PUT /partner/{id}`, `DELETE /partner/{id}` |
@@ -202,7 +202,7 @@ The application runs as a single Spring Boot service.
    | `admin` | `admin` | Admin (sees everything) |
    | `wylaade` | `password` | Partner (sees only Wylaade GmbH) |
    | `drachehoehli` | `password` | Partner (sees only Drachehöhli GmbH) |
-5. The API documentation is available at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). To call authenticated endpoints from Swagger UI, paste a JWT obtained via `POST /partner/token` into the *Authorize* dialog.
+5. The API documentation is available at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). To call authenticated endpoints from Swagger UI, paste a JWT obtained via `POST /token` into the *Authorize* dialog.
 H2 runs in in-memory mode, so all data resets on each application restart and is rebuilt from the seed data in `fluxTrackApplication.initTestData()`.
 
 

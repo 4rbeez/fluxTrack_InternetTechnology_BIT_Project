@@ -69,7 +69,7 @@ public class SecurityConfig {
                     "/docs",
                     "/docs/**"
                 ).permitAll()
-                .requestMatchers("/partner/token").hasRole("PARTNER")
+                .requestMatchers("/token").hasRole("PARTNER")
                 .anyRequest().hasAuthority("SCOPE_READ")
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

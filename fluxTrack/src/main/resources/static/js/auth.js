@@ -83,7 +83,7 @@ if (loginForm) {
         try {
             // UTF-8 safe base64 for usernames/passwords with non-ASCII characters
             const basicAuth = btoa(unescape(encodeURIComponent(`${username}:${password}`)));
-            const response = await fetch('/partner/token', {
+            const response = await fetch('/token', {
                 method: 'POST',
                 headers: { 'Authorization': `Basic ${basicAuth}` },
             });
