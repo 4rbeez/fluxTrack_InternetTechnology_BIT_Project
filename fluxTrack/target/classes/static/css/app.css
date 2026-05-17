@@ -116,7 +116,7 @@ button { font-family: inherit; }
 }
 .sidebar-toggle {
     background: none; border: none; color: white;
-    cursor: pointer; padding: 8px; margin-bottom: 16px;
+    cursor: pointer; padding: 8px; margin: 0 auto 16px;
     display: block;
 }
 .sidebar-nav { display: flex; flex-direction: column; gap: 6px; }
@@ -130,6 +130,13 @@ button { font-family: inherit; }
 }
 .sidebar-item:hover, .sidebar-item.active { background: rgba(255,255,255,0.15); }
 .sidebar-icon { display: flex; align-items: center; justify-content: center; }
+
+/* Sidebar collapsed state — toggled by the hamburger buttons.
+   Hides the sidebar entirely so the content area gets the full width,
+   and reveals the topbar hamburger (which is visibility:hidden by default)
+   so the user can bring the sidebar back. */
+body.sidebar-collapsed .sidebar { display: none; }
+body.sidebar-collapsed .topbar-toggle { visibility: visible; }
 
 /* ============================================
    Topbar

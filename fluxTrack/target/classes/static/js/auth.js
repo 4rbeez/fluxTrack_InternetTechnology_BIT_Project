@@ -145,3 +145,32 @@ if (currentUsername && currentUsername !== 'admin') {
         partnersLink.classList.add('hidden');
     }
 }
+
+// =============================================================
+// Sidebar collapse toggle
+// =============================================================
+// Two hamburger buttons cooperate: the one in the sidebar (visible
+// when the sidebar is shown) and the one in the topbar (which is
+// visibility:hidden until the sidebar is collapsed). Clicking either
+// flips a body class and the CSS does the rest. State persists across
+// navigation in localStorage so it doesn't reset on every page load.
+const SIDEBAR_COLLAPSED_KEY = 'fluxtrack_sidebarCollapsed';
+
+function applySidebarState() {
+    if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') {
+        document.body.classList.add('sidebar-collapsed');
+    } else {
+        document.body.classList.remove('sidebar-collapsed');
+    }
+}
+
+function toggleSidebar() {
+    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+}
+
+applySidebarState();
+
+document.querySelectorAll('.sidebar-toggle, .topbar-toggle').forEach(btn => {
+    btn.addEventListener('click', toggleSidebar);
+});
