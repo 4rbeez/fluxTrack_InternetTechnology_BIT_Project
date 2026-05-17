@@ -113,7 +113,7 @@ The `com.example.demo.data.domain` package contains the following domain objects
 
 **Method:** `GET` -->
 
-The application enforces four business rules in the service layer (`com.example.demo.business`), each traceable to a specific use case in the Requirements Engineering paper.
+The application enforces five business rules in the service layer (`com.example.demo.business`), each traceable to a specific use case in the Requirements Engineering paper.
  
 **Rule 1 — Role-based product visibility (UC 301)**
  
@@ -128,8 +128,15 @@ When the authenticated user is `admin`, the service returns all products across 
 *Endpoint:* `DELETE /product/{id}`
  
 Admin users can delete any product. Partner users can only delete products they own. Attempts to delete another partner's product return HTTP 403 Forbidden. The same protection prevents a partner from indirectly inferring the existence of another partner's products by id.
+
+**Rule 3 — Ownership-protected update (UC 5)**
+
+*Service method:* `ProductService.updateProductForUser(Long id, Product product, Authentication auth)`
+*Endpoint:* `PUT /product/{id}`
+
+Admin users can update any product, including reassigning its `productPartnerID` to a different partner. Partner users can only update products they own. As an additional defence, when a partner submits a request body that contains a different `productPartnerID`, the service overrides the value with the caller's own partnerID before persisting; this prevents a partner from "giving a product away" to another partner via a hand-crafted PUT. Attempts to update another partner's product return HTTP 403 Forbidden, mirroring the delete pattern so neither operation leaks the existence of another partner's products to non-owners.
  
-**Rule 3 — Atomic sale recording (UC 304)**
+**Rule 4 — Atomic sale recording (UC 304)**
  
 *Service method:* `OrderService.createOrderForSale(Long productId, Integer quantity, Authentication auth)`
 *Endpoint:* `POST /order/sale`
@@ -140,7 +147,7 @@ A stock decrement from the inventory UI triggers this method, which atomically v
 3. The caller owns the product (admin bypasses).
 It then creates an `Order` record with a price snapshot (`product price × quantity`) and decrements the product's stock. If any check fails, no state changes are persisted.
 
-**Rule 4 — Support ticket state transition validation (UC 107)**
+**Rule 5 — Support ticket state transition validation (UC 107)**
 
 *Service methods:* `SupportTicketService.adminReply()`, `partnerReply()`, `markResolved()`, `adminReopen()`, `markCompleted()`
 *Endpoints:* `POST /ticket/{id}/admin-reply`, `/partner-reply`, `/resolve`, `/reopen`, `/complete`
@@ -185,6 +192,7 @@ The frontend is a server-rendered application built with Thymeleaf and vanilla J
 - The application has a small, fixed set of views, which suits Thymeleaf's strengths (the lecturer's slides specifically call out internal dashboards as a Thymeleaf use case).
 - It keeps the entire project in a single Spring Boot deployment, with one auth setup and no separate frontend build pipeline.
 - It allows pixel-level fidelity to the Figma prototype, which would have been harder with a low-code platform.
+
 The frontend consists of seven views, each backed by a Thymeleaf template and a vanilla JavaScript module that handles interactivity through the `fetch` API.
  
 | View | URL | Backend endpoints used |
@@ -197,11 +205,13 @@ The frontend consists of seven views, each backed by a Thymeleaf template and a 
 | Support Tickets | `/tickets` | `GET /ticket/`, `POST /ticket/`, `POST /ticket/{id}/admin-reply`, `/partner-reply`, `/resolve`, `/reopen`, `/complete` |
 | Reports | `/reports` | `GET /order/`, `GET /partner/` |
  
-Reusable templates are defined as Thymeleaf fragments under `templates/fragments/` (head, sidebar, topbar). The sidebar accepts an `activePage` parameter to highlight the current view. Shared client logic lives in `static/js/auth.js`, which handles login, token storage in `localStorage`, an `authFetch()` wrapper that attaches the JWT to every request and redirects to `/login` on 401/403, and admin-only sidebar visibility.
+Reusable templates are defined as Thymeleaf fragments under `templates/fragments/` (head, sidebar, topbar). The sidebar accepts an `activePage` parameter to highlight the current view. Shared client logic lives in `static/js/auth.js`, which handles login, token storage in `localStorage`, an `authFetch()` wrapper that attaches the JWT to every request and redirects to `/login` on 401/403, admin-only sidebar visibility, per-user company branding in the topbar (admin sees the fluxed mark and the label "Administrator"; partners see their own company logo and display name), and a sidebar collapse toggle whose state is persisted across navigation in `localStorage`.
 
 A dedicated `bell.js` module runs on every authenticated page (loaded via the topbar fragment) and provides a notifications indicator: it fetches the user's tickets, computes "events" the user has not yet seen based on a `localStorage` timestamp of their last visit to `/tickets`, and lights up a small red dot on the bell icon if any unseen events exist. Clicking the bell opens a dropdown of recent events, each linking back to the tickets page.
 
 The Reports view renders an SVG bar chart of daily revenue across the selected date range, computed client-side from the orders data. CSV exports are generated in-browser using a `Blob` and a synthetic anchor download, with a UTF-8 BOM so the resulting files open cleanly in Microsoft Excel including umlauts in product and partner names.
+
+The Products view layers a few UX touches on top of the basic CRUD endpoints: an Edit modal that reuses the New Product form (same fields, swaps POST for PUT), placeholder text in that modal that adapts to the logged-in partner's domain (wine examples for Wylaade, board-game examples for Drachehöhli, generic for admin until a partner is picked from the dropdown), and row checkboxes with a working "select all" plus a bulk-delete action that fires parallel DELETE requests through the existing ownership-protected endpoint.
  
 Styling is implemented in `static/css/app.css` using CSS custom properties for the design tokens (gold/brown brand palette, navy login accent, status pill colours), with `static/css/login.css` providing the login page's brand orb. The design follows the Figma prototype created during the Requirements Engineering module.
 
@@ -275,7 +285,7 @@ In line with the declaration of authenticity in our Requirements Engineering pap
  
 | Aid | Usage | Affected areas |
 |---|---|---|
-| Claude (Anthropic) | Pair-programming assistant used to plan the frontend architecture, scaffold Thymeleaf templates, write the vanilla JavaScript modules, design the business rules in the service layer, draft this README, and debug integration issues. The decisions about scope, design, and architecture were taken by the project team; Claude was used to accelerate implementation. | Frontend templates and JavaScript (`templates/`, `static/`), service-layer business rules, README documentation |
+| Claude (Anthropic) | Pair-programming assistant used to plan the frontend architecture, scaffold Thymeleaf templates, write the vanilla JavaScript modules, design the business rules in the service layer (including the ownership-protected update and delete patterns), draft this README, and debug integration issues. The decisions about scope, design, and architecture were taken by the project team; Claude was used to accelerate implementation. | Frontend templates and JavaScript (`templates/`, `static/`), service-layer business rules, README documentation |
 | Grammarly | Grammatical review and phrasing improvements | README and inline documentation comments |
 
 
