@@ -7,6 +7,7 @@
 //   - +/- quantity adjustment (PUT /product/{id})
 //   - "Add new product" modal (POST /product/add)
 //   - Admin-only partner picker in the modal
+//   - Per-partner placeholder text in the modal (wine vs. board games)
 //   - Delete product with confirmation (DELETE /product/{id})
 // =============================================================
 
@@ -16,6 +17,48 @@ let allProducts = [];
 const partnerLookup = {};   // { partnerID: partnerName }
 const isAdmin = getUser() === 'admin';
 let pendingProductDeleteId = null;
+
+// -------------------------------------------------------------
+// Per-partner placeholder text for the "Add new product" modal.
+// Wylaade sells wine; Drachehöhli sells board games. Showing
+// partner-appropriate examples makes the form feel native to
+// whichever shop is using it. Admin sees a neutral set until
+// they pick a partner from the dropdown.
+// -------------------------------------------------------------
+const USERNAME_TO_PARTNER_ID = {
+    'wylaade': 1,
+    'drachehoehli': 2,
+};
+
+const PARTNER_PLACEHOLDERS = {
+    1: { // Wylaade — wine
+        name:     'E.g. Baselbieter Kerner 2022',
+        sku:      'E.g. 00083',
+        price:    'E.g. 26.80',
+        quantity: 'E.g. 34',
+    },
+    2: { // Drachehöhli — board games
+        name:     'E.g. Catan – Seafarers Expansion',
+        sku:      'E.g. 00187',
+        price:    'E.g. 49.90',
+        quantity: 'E.g. 12',
+    },
+};
+
+const GENERIC_PLACEHOLDERS = {
+    name:     'E.g. Product name',
+    sku:      'E.g. 00100',
+    price:    'E.g. 19.90',
+    quantity: 'E.g. 20',
+};
+
+function applyPlaceholders(partnerId) {
+    const set = PARTNER_PLACEHOLDERS[partnerId] || GENERIC_PLACEHOLDERS;
+    document.getElementById('productName').placeholder     = set.name;
+    document.getElementById('productSKU').placeholder      = set.sku;
+    document.getElementById('productPrice').placeholder    = set.price;
+    document.getElementById('productQuantity').placeholder = set.quantity;
+}
 
 // -------------------------------------------------------------
 // Data loading
@@ -202,11 +245,25 @@ const productForm = document.getElementById('product-form');
 
 openBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
+    // Match the placeholders to whoever is logged in.
+    // Admin starts generic; placeholders update when they pick a partner below.
+    if (isAdmin) {
+        applyPlaceholders(null);
+    } else {
+        applyPlaceholders(USERNAME_TO_PARTNER_ID[getUser()]);
+    }
 });
 
 cancelBtn.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
+});
+
+// Admin only: as they pick a partner, re-skin the placeholders to match.
+// Harmless for non-admin users (the picker is hidden and never fires change).
+document.getElementById('productPartnerID').addEventListener('change', (e) => {
+    const raw = e.target.value;
+    applyPlaceholders(raw ? parseInt(raw, 10) : null);
 });
 
 function closeModal() {
@@ -302,7 +359,7 @@ document.getElementById('confirm-product-delete-btn').addEventListener('click', 
 (async () => {
     await loadPartners();
     await loadProducts();
- 
+
     // Pre-fill search from URL param (used when arriving from Dashboard)
     const urlParams = new URLSearchParams(window.location.search);
     const searchParam = urlParams.get('search');

@@ -58,17 +58,20 @@
 </div>
 
 <!-- New Product Modal -->
+<!-- Placeholders below are neutral defaults; products.js overwrites them with
+     partner-appropriate examples (wine for Wylaade, board games for Drachehöhli)
+     when the modal is opened. -->
 <div id="product-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
     <div class="modal-content">
         <h2 id="product-modal-title">Add new product</h2>
         <form id="product-form" novalidate>
             <div class="form-group">
                 <label for="productName">Product Name<span class="required">*</span></label>
-                <input type="text" id="productName" name="productName" placeholder="E.g. Baselbieter Kerner 2022" required>
+                <input type="text" id="productName" name="productName" placeholder="E.g. Product name" required>
             </div>
             <div class="form-group">
                 <label for="productSKU">SKU<span class="required">*</span></label>
-                <input type="text" id="productSKU" name="productSKU" placeholder="E.g. 00083" required>
+                <input type="text" id="productSKU" name="productSKU" placeholder="E.g. 00100" required>
             </div>
             <div class="form-group hidden" id="partner-picker-group">
                 <label for="productPartnerID">Partner<span class="required">*</span></label>
@@ -78,11 +81,11 @@
             </div>
             <div class="form-group">
                 <label for="productPrice">Price in CHF</label>
-                <input type="number" step="0.01" min="0" id="productPrice" name="productPrice" placeholder="E.g. 26.80" required>
+                <input type="number" step="0.01" min="0" id="productPrice" name="productPrice" placeholder="E.g. 19.90" required>
             </div>
             <div class="form-group">
                 <label for="productQuantity">Stock Quantity</label>
-                <input type="number" min="0" id="productQuantity" name="productQuantity" placeholder="E.g. 34" required>
+                <input type="number" min="0" id="productQuantity" name="productQuantity" placeholder="E.g. 20" required>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-gold-light" id="cancel-modal">Cancel</button>
