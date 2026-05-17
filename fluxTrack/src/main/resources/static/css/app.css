@@ -153,10 +153,11 @@ button { font-family: inherit; }
 .topbar-bell svg { width: 24px; height: 24px; }
 .topbar-company { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--color-gold); }
 .company-logo {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    background: var(--color-gold); color: white;
-    border-radius: 50%; font-size: 15px; font-weight: 700;
+    display: block;
+    height: 36px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
 }
 .company-name { font-size: 17px; }
 .company-menu {

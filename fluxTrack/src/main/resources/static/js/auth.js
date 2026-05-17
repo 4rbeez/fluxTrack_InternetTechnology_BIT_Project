@@ -51,6 +51,7 @@ async function authFetch(url, options = {}) {
         'Authorization': `Bearer ${token}`,
     };
     const response = await fetch(url, { ...options, headers });
+
     if (response.status === 401 || response.status === 403) {
         clearAuth();
         window.location.href = '/login';
@@ -87,13 +88,16 @@ if (loginForm) {
                 method: 'POST',
                 headers: { 'Authorization': `Basic ${basicAuth}` },
             });
+
             if (!response.ok) {
                 throw new Error(response.status === 401
                     ? 'Invalid username or password'
                     : `Login failed (HTTP ${response.status})`);
             }
+
             const token = (await response.text()).trim();
             if (!token) throw new Error('Empty token returned by server');
+
             setAuth(token, username);
             window.location.href = '/dashboard';
         } catch (err) {
@@ -103,11 +107,30 @@ if (loginForm) {
 }
 
 // =============================================================
-// Topbar: company name + logout (present on app pages)
+// Topbar: logo + display name + logout (present on app pages)
 // =============================================================
+
+// Map technical login username → display name + logo file.
+// Keeping the lookup here means the topbar fragment stays static
+// HTML and any page that includes the fragment gets the swap for free.
+const USER_PROFILES = {
+    'admin':        { displayName: 'Administrator',    logo: '/images/partners/fluxed.png' },
+    'wylaade':      { displayName: 'Wylaade GmbH',     logo: '/images/partners/wylaade.png' },
+    'drachehoehli': { displayName: 'Drachehöhli GmbH', logo: '/images/partners/drachehoehli.png' },
+};
+
+const currentUsername = getUser();
+const currentProfile  = currentUsername ? USER_PROFILES[currentUsername] : null;
+
 const companyNameEl = document.getElementById('company-name');
-if (companyNameEl && getUser()) {
-    companyNameEl.textContent = getUser();
+if (companyNameEl && currentUsername) {
+    companyNameEl.textContent = currentProfile ? currentProfile.displayName : currentUsername;
+}
+
+const companyLogoEl = document.getElementById('company-logo');
+if (companyLogoEl && currentProfile) {
+    companyLogoEl.src = currentProfile.logo;
+    companyLogoEl.alt = currentProfile.displayName + ' logo';
 }
 
 const logoutBtn = document.getElementById('logout-btn');
@@ -116,7 +139,7 @@ if (logoutBtn) {
 }
 
 // Hide admin-only sidebar items for non-admin users.
-if (getUser() && getUser() !== 'admin') {
+if (currentUsername && currentUsername !== 'admin') {
     const partnersLink = document.getElementById('sidebar-partners');
     if (partnersLink) {
         partnersLink.classList.add('hidden');
