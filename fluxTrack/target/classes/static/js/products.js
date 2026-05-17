@@ -6,9 +6,11 @@
 //   - search + filter
 //   - +/- quantity adjustment (PUT /product/{id})
 //   - "Add new product" modal (POST /product/add)
+//   - Edit modal reuses the same form; submit goes to PUT /product/{id}
 //   - Admin-only partner picker in the modal
 //   - Per-partner placeholder text in the modal (wine vs. board games)
-//   - Delete product with confirmation (DELETE /product/{id})
+//   - Row checkboxes with select-all + bulk delete
+//   - Delete with confirmation (single + bulk)
 // =============================================================
 
 requireAuth();
@@ -16,7 +18,18 @@ requireAuth();
 let allProducts = [];
 const partnerLookup = {};   // { partnerID: partnerName }
 const isAdmin = getUser() === 'admin';
-let pendingProductDeleteId = null;
+
+// Set of productIDs (as strings) currently selected via checkbox.
+// Tracked separately from the DOM so the selection survives re-renders
+// triggered by search/filter changes.
+const selectedProductIds = new Set();
+
+// Pending delete state. Always an array; single-row delete is a 1-element
+// array, bulk delete is a multi-element array. Drives the confirm modal.
+let pendingProductDeleteIds = [];
+
+// When set, the modal is in edit mode and submit will PUT instead of POST.
+let editingProduct = null;
 
 // -------------------------------------------------------------
 // Per-partner placeholder text for the "Add new product" modal.
@@ -96,6 +109,11 @@ async function loadProducts() {
             return;
         }
         allProducts = await res.json();
+        // Drop selections for products that no longer exist (e.g. after a delete)
+        const stillExisting = new Set(allProducts.map(p => String(p.productID)));
+        Array.from(selectedProductIds).forEach(id => {
+            if (!stillExisting.has(id)) selectedProductIds.delete(id);
+        });
         applySearchFilter();
     } catch (err) {
         console.error(err);
@@ -110,6 +128,7 @@ function renderProducts(products) {
     const tbody = document.getElementById('products-tbody');
     if (!products.length) {
         tbody.innerHTML = `<tr><td colspan="9" class="table-empty">No products found</td></tr>`;
+        updateBulkActionBar();
         return;
     }
     tbody.innerHTML = products.map(p => {
@@ -117,9 +136,10 @@ function renderProducts(products) {
         const inStock = qty > 0;
         const partnerName = partnerLookup[p.productPartnerID] ?? '—';
         const price = (p.productPrice ?? 0).toFixed(2);
+        const isChecked = selectedProductIds.has(String(p.productID));
         return `
             <tr>
-                <td><input type="checkbox" data-id="${p.productID}"></td>
+                <td><input type="checkbox" data-id="${p.productID}" ${isChecked ? 'checked' : ''}></td>
                 <td>${escapeHtml(p.productSKU || '')}</td>
                 <td>${escapeHtml(p.productName || '')}</td>
                 <td>${escapeHtml(partnerName)}</td>
@@ -135,10 +155,12 @@ function renderProducts(products) {
                     </span>
                 </td>
                 <td>
+                    <button class="row-action product-edit-btn" data-id="${p.productID}" title="Edit">✏️</button>
                     <button class="row-action product-delete-btn" data-id="${p.productID}" title="Delete">🗑</button>
                 </td>
             </tr>`;
     }).join('');
+    updateBulkActionBar();
 }
 
 function escapeHtml(str) {
@@ -177,9 +199,16 @@ document.getElementById('search-input').addEventListener('input', applySearchFil
 document.getElementById('filter-select').addEventListener('change', applySearchFilter);
 
 // -------------------------------------------------------------
-// Row actions: quantity buttons + delete button (event delegation)
+// Row actions: edit + delete + quantity buttons (event delegation)
 // -------------------------------------------------------------
 document.getElementById('products-tbody').addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('.product-edit-btn');
+    if (editBtn) {
+        const product = allProducts.find(p => String(p.productID) === editBtn.dataset.id);
+        if (product) openEditModal(product);
+        return;
+    }
+
     const deleteBtn = e.target.closest('.product-delete-btn');
     if (deleteBtn) {
         openProductDeleteModal(deleteBtn.dataset.id);
@@ -236,14 +265,81 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
 });
 
 // -------------------------------------------------------------
-// New Product modal
+// Checkbox handling: select-all + per-row selection
+// -------------------------------------------------------------
+document.getElementById('select-all').addEventListener('change', (e) => {
+    const checked = e.target.checked;
+    const visibleCheckboxes = document.querySelectorAll('#products-tbody input[type="checkbox"]');
+    visibleCheckboxes.forEach(cb => {
+        cb.checked = checked;
+        if (checked) {
+            selectedProductIds.add(cb.dataset.id);
+        } else {
+            selectedProductIds.delete(cb.dataset.id);
+        }
+    });
+    updateBulkActionBar();
+});
+
+document.getElementById('products-tbody').addEventListener('change', (e) => {
+    const cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    if (cb.checked) {
+        selectedProductIds.add(cb.dataset.id);
+    } else {
+        selectedProductIds.delete(cb.dataset.id);
+    }
+    updateBulkActionBar();
+});
+
+// Reflects the count + drives the visibility of the bulk-action-bar.
+// Also computes the tri-state (checked / unchecked / indeterminate) for select-all
+// based on what's currently visible.
+function updateBulkActionBar() {
+    const visibleCheckboxes = document.querySelectorAll('#products-tbody input[type="checkbox"]');
+    const checkedCount = Array.from(visibleCheckboxes).filter(cb => cb.checked).length;
+    const totalVisible = visibleCheckboxes.length;
+
+    const bar = document.getElementById('bulk-action-bar');
+    const countLabel = document.getElementById('bulk-action-count');
+    if (checkedCount > 0) {
+        bar.classList.remove('hidden');
+        countLabel.textContent = `${checkedCount} selected`;
+    } else {
+        bar.classList.add('hidden');
+    }
+
+    const selectAll = document.getElementById('select-all');
+    if (totalVisible === 0 || checkedCount === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    } else if (checkedCount === totalVisible) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+    } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+    }
+}
+
+document.getElementById('bulk-delete-btn').addEventListener('click', () => {
+    const ids = Array.from(selectedProductIds);
+    if (ids.length === 0) return;
+    openBulkDeleteModal(ids);
+});
+
+// -------------------------------------------------------------
+// New/Edit Product modal
 // -------------------------------------------------------------
 const modal = document.getElementById('product-modal');
 const openBtn = document.getElementById('open-new-product');
 const cancelBtn = document.getElementById('cancel-modal');
 const productForm = document.getElementById('product-form');
+const modalTitleEl = document.getElementById('product-modal-title');
 
 openBtn.addEventListener('click', () => {
+    editingProduct = null;
+    modalTitleEl.textContent = 'Add new product';
     modal.classList.remove('hidden');
     // Match the placeholders to whoever is logged in.
     // Admin starts generic; placeholders update when they pick a partner below.
@@ -253,6 +349,23 @@ openBtn.addEventListener('click', () => {
         applyPlaceholders(USERNAME_TO_PARTNER_ID[getUser()]);
     }
 });
+
+function openEditModal(product) {
+    editingProduct = product;
+    modalTitleEl.textContent = 'Edit product';
+    document.getElementById('productName').value     = product.productName ?? '';
+    document.getElementById('productSKU').value      = product.productSKU ?? '';
+    document.getElementById('productPrice').value    = product.productPrice ?? '';
+    document.getElementById('productQuantity').value = product.productQuantity ?? 0;
+    if (isAdmin) {
+        document.getElementById('productPartnerID').value = product.productPartnerID ?? '';
+        applyPlaceholders(product.productPartnerID);
+    } else {
+        applyPlaceholders(USERNAME_TO_PARTNER_ID[getUser()]);
+    }
+    document.getElementById('form-error').textContent = '';
+    modal.classList.remove('hidden');
+}
 
 cancelBtn.addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => {
@@ -270,6 +383,8 @@ function closeModal() {
     modal.classList.add('hidden');
     productForm.reset();
     document.getElementById('form-error').textContent = '';
+    editingProduct = null;
+    modalTitleEl.textContent = 'Add new product';
 }
 
 productForm.addEventListener('submit', async (e) => {
@@ -291,6 +406,10 @@ productForm.addEventListener('submit', async (e) => {
             return;
         }
         newProduct.productPartnerID = parseInt(partnerIdRaw, 10);
+    } else if (editingProduct) {
+        // Non-admin editing: the partner picker is hidden, so carry the
+        // original partnerID forward — the backend expects it on PUT.
+        newProduct.productPartnerID = editingProduct.productPartnerID;
     }
 
     if (!newProduct.productName || !newProduct.productSKU) {
@@ -302,23 +421,34 @@ productForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const res = await authFetch('/product/add', {
-        method: 'POST',
-        body: JSON.stringify(newProduct),
-    });
+    let res;
+    if (editingProduct) {
+        newProduct.productID = editingProduct.productID;
+        res = await authFetch(`/product/${editingProduct.productID}`, {
+            method: 'PUT',
+            body: JSON.stringify(newProduct),
+        });
+    } else {
+        res = await authFetch('/product/add', {
+            method: 'POST',
+            body: JSON.stringify(newProduct),
+        });
+    }
 
     if (res && res.ok) {
         closeModal();
         await loadProducts();
     } else {
-        errorDiv.textContent = `Could not create product${res ? ` (HTTP ${res.status})` : ''}. Check that all fields are valid.`;
+        const action = editingProduct ? 'update' : 'create';
+        errorDiv.textContent = `Could not ${action} product${res ? ` (HTTP ${res.status})` : ''}. Check that all fields are valid.`;
     }
 });
 
 // -------------------------------------------------------------
-// Delete Product modal
+// Delete Product modal (single + bulk)
 // -------------------------------------------------------------
 const deleteModal     = document.getElementById('product-delete-modal');
+const deleteTitleEl   = document.getElementById('product-delete-title');
 const deleteMessageEl = document.getElementById('product-delete-message');
 const deleteErrorEl   = document.getElementById('product-delete-error');
 
@@ -330,26 +460,49 @@ deleteModal.addEventListener('click', (e) => {
 function openProductDeleteModal(id) {
     const product = allProducts.find(p => String(p.productID) === String(id));
     if (!product) return;
-    pendingProductDeleteId = id;
+    pendingProductDeleteIds = [String(id)];
+    deleteTitleEl.textContent = 'Delete product?';
     deleteMessageEl.textContent = `Are you sure you want to delete "${product.productName}" (SKU ${product.productSKU})? This cannot be undone.`;
     deleteErrorEl.textContent = '';
     deleteModal.classList.remove('hidden');
 }
 
+function openBulkDeleteModal(ids) {
+    pendingProductDeleteIds = ids.slice();
+    const n = ids.length;
+    deleteTitleEl.textContent = n === 1 ? 'Delete product?' : 'Delete products?';
+    deleteMessageEl.textContent =
+        `Are you sure you want to delete ${n} product${n === 1 ? '' : 's'}? This cannot be undone.`;
+    deleteErrorEl.textContent = '';
+    deleteModal.classList.remove('hidden');
+}
+
 function closeProductDeleteModal() {
-    pendingProductDeleteId = null;
+    pendingProductDeleteIds = [];
     deleteModal.classList.add('hidden');
     deleteErrorEl.textContent = '';
 }
 
 document.getElementById('confirm-product-delete-btn').addEventListener('click', async () => {
-    if (!pendingProductDeleteId) return;
-    const res = await authFetch(`/product/${pendingProductDeleteId}`, { method: 'DELETE' });
-    if (res && res.ok) {
+    if (pendingProductDeleteIds.length === 0) return;
+
+    // Fire all deletes in parallel. For a small inventory this is fine; for
+    // a large bulk operation a dedicated batch endpoint would be better.
+    const results = await Promise.all(
+        pendingProductDeleteIds.map(id =>
+            authFetch(`/product/${id}`, { method: 'DELETE' })
+        )
+    );
+
+    const failed = results.filter(r => !r || !r.ok);
+    if (failed.length === 0) {
+        // Drop the now-deleted IDs from the selection set
+        pendingProductDeleteIds.forEach(id => selectedProductIds.delete(id));
         closeProductDeleteModal();
         await loadProducts();
     } else {
-        deleteErrorEl.textContent = `Could not delete product${res ? ` (HTTP ${res.status})` : ''}.`;
+        deleteErrorEl.textContent =
+            `${failed.length} of ${pendingProductDeleteIds.length} product(s) could not be deleted.`;
     }
 });
 

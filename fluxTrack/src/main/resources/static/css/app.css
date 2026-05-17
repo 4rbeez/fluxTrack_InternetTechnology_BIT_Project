@@ -252,11 +252,27 @@ body.sidebar-collapsed .topbar-toggle { visibility: visible; }
     color: var(--color-text);
 }
 .data-table tbody tr:hover { background: #fafbfc; }
+.data-table tbody tr:has(input[type="checkbox"]:checked) { background: rgba(184, 148, 94, 0.08); }
 .data-table input[type="checkbox"] {
     width: 18px; height: 18px;
     accent-color: var(--color-gold);
     cursor: pointer;
 }
+
+/* Bulk action bar — appears between the toolbar and the table when one
+   or more rows are selected. Shows the selection count and a delete button. */
+.bulk-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: rgba(184, 148, 94, 0.08);
+    border-left: 3px solid var(--color-gold);
+    border-radius: 4px;
+}
+#bulk-action-count { font-weight: 600; color: var(--color-text); }
 .table-empty {
     text-align: center;
     color: var(--color-text-muted);

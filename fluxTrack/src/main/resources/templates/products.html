@@ -34,6 +34,12 @@
                     </div>
                 </div>
 
+                <!-- Appears when ≥1 row checkbox is ticked. Managed by products.js. -->
+                <div id="bulk-action-bar" class="bulk-action-bar hidden">
+                    <span id="bulk-action-count">0 selected</span>
+                    <button type="button" id="bulk-delete-btn" class="btn btn-danger">Delete selected</button>
+                </div>
+
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -57,10 +63,11 @@
     </div>
 </div>
 
-<!-- New Product Modal -->
+<!-- New/Edit Product Modal -->
 <!-- Placeholders below are neutral defaults; products.js overwrites them with
      partner-appropriate examples (wine for Wylaade, board games for Drachehöhli)
-     when the modal is opened. -->
+     when the modal is opened. The modal is reused for both Add and Edit;
+     products.js swaps the title and the submit method (POST vs PUT). -->
 <div id="product-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
     <div class="modal-content">
         <h2 id="product-modal-title">Add new product</h2>
@@ -96,10 +103,10 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Confirmation Modal (used for both single and bulk delete) -->
 <div id="product-delete-modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-content modal-small">
-        <h2>Delete product?</h2>
+        <h2 id="product-delete-title">Delete product?</h2>
         <p id="product-delete-message" class="confirm-message">Are you sure?</p>
         <div class="modal-actions">
             <button type="button" class="btn btn-gold-light" id="cancel-product-delete-btn">Cancel</button>
