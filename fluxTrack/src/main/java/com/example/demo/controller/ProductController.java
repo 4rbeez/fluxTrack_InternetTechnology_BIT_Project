@@ -87,15 +87,19 @@ public class ProductController {
     // }
 
     // Update Product
+    // Ownership-protected: partners can only update their own products;
+    // admin can update any. Returns 403 if the caller doesn't own the
+    // product or it doesn't exist (we don't leak existence to non-owners).
     @PutMapping(path = "/{id}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        try {
-            product = productService.updateProduct(id, product);
-            return ResponseEntity.ok(product);
-        } 
-        catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with given id: " + id, e);
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product product,
+            Authentication auth) {
+        Product updated = productService.updateProductForUser(id, product, auth);
+        if (updated != null) {
+            return ResponseEntity.ok(updated);
         }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot update this product");
     }
 
     // Delete Product

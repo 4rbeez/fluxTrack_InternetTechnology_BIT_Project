@@ -84,6 +84,35 @@ public class ProductService {
     }
 
     // -----------------------------------------------------------------
+    // Ownership-protected update (mirrors UC 5 / deleteProductForUser)
+    // -----------------------------------------------------------------
+    // - Admin can update any product, including reassigning partnerID
+    // - Partner users can only update products they own; any partnerID
+    //   in the request body is forced back to the caller's partnerID
+    //   so a partner cannot reassign a product to another partner via
+    //   a hand-crafted PUT
+    // Returns null if the update was denied or the product does not exist.
+    // -----------------------------------------------------------------
+    public Product updateProductForUser(Long id, Product updated, Authentication auth) {
+        if (auth == null) return null;
+        Product existing = productRepository.findById(id).orElse(null);
+        if (existing == null) return null;
+
+        String username = auth.getName();
+        if (!"admin".equals(username)) {
+            Long callerPartnerId = resolvePartnerIdFromUsername(username);
+            if (callerPartnerId == null) return null;
+            if (!callerPartnerId.equals(existing.getProductPartnerID())) {
+                return null; // Partner trying to update someone else's product
+            }
+            // Defensive: even if the body specified a different partnerID,
+            // force it back to the caller's. Partners cannot give products away.
+            updated.setProductPartnerID(callerPartnerId);
+        }
+        return updateProduct(id, updated);
+    }
+
+    // -----------------------------------------------------------------
     // CRUD methods (existing behaviour preserved)
     // -----------------------------------------------------------------
 
