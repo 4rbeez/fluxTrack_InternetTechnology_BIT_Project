@@ -420,6 +420,11 @@ productForm.addEventListener('submit', async (e) => {
         errorDiv.textContent = 'Price and Quantity must be numbers.';
         return;
     }
+    if (newProduct.productPrice < 0){
+        errorDiv.textContent = 'Price cannot be negative.';
+        return;
+
+    }
 
     let res;
     if (editingProduct) {
