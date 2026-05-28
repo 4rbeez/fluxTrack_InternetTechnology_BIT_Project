@@ -52,6 +52,15 @@ public class fluxTrackApplication {
 	// Initialize some test data for testing purposes
 	@PostConstruct
 	public void initTestData() throws Exception {
+		// Only seed when the database is empty.
+		// - dev profile (in-memory H2): the DB is wiped on every restart, so it is
+		//   always empty here and the demo data is recreated each run (unchanged behaviour).
+		// - prod profile (PostgreSQL): data persists across restarts, so this guard
+		//   ensures the demo data is inserted only on the very first boot and never duplicated.
+		if (!partnerService.getAllPartners().isEmpty()) {
+			return;
+		}
+
 		// ---------- Partner 1: Wylaade GmbH ----------
 		Partner wylaade = new Partner();
 		wylaade.setPartnerName("Wylaade GmbH");
