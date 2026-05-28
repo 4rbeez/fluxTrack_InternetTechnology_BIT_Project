@@ -59,9 +59,12 @@ public class ProductController {
             } else if (product.getProductPartnerID() == null) {
                 product.setProductPartnerID(1L);
             }
-    
+
             product = productService.addProduct(product);
             return ResponseEntity.ok(product);
+        } catch (IllegalArgumentException e) {
+            // Validation failure from the service (e.g. negative price/quantity).
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -90,12 +93,19 @@ public class ProductController {
     // Ownership-protected: partners can only update their own products;
     // admin can update any. Returns 403 if the caller doesn't own the
     // product or it doesn't exist (we don't leak existence to non-owners).
+    // Returns 400 if the payload fails validation (e.g. negative price).
     @PutMapping(path = "/{id}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id,
             @RequestBody Product product,
             Authentication auth) {
-        Product updated = productService.updateProductForUser(id, product, auth);
+        Product updated;
+        try {
+            updated = productService.updateProductForUser(id, product, auth);
+        } catch (IllegalArgumentException e) {
+            // Validation failure (e.g. negative price/quantity).
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
         if (updated != null) {
             return ResponseEntity.ok(updated);
         }

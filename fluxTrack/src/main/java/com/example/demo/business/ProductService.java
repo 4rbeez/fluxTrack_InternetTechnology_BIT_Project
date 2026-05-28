@@ -92,6 +92,8 @@ public class ProductService {
     //   so a partner cannot reassign a product to another partner via
     //   a hand-crafted PUT
     // Returns null if the update was denied or the product does not exist.
+    // Throws IllegalArgumentException if the payload fails validation
+    // (e.g. negative price or quantity).
     // -----------------------------------------------------------------
     public Product updateProductForUser(Long id, Product updated, Authentication auth) {
         if (auth == null) return null;
@@ -113,6 +115,26 @@ public class ProductService {
     }
 
     // -----------------------------------------------------------------
+    // Payload validation — applied on both create and update.
+    // Frontend forms already block negative values via input[min=0], but
+    // a hand-crafted HTTP request (curl, devtools) can bypass that, so
+    // the service layer enforces it as the last line of defence.
+    // Throws IllegalArgumentException, which the controllers translate
+    // to HTTP 400 Bad Request.
+    // -----------------------------------------------------------------
+    private void validateProduct(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product payload is required");
+        }
+        if (product.getProductPrice() != null && product.getProductPrice() < 0) {
+            throw new IllegalArgumentException("Product price cannot be negative");
+        }
+        if (product.getProductQuantity() != null && product.getProductQuantity() < 0) {
+            throw new IllegalArgumentException("Product quantity cannot be negative");
+        }
+    }
+
+    // -----------------------------------------------------------------
     // CRUD methods (existing behaviour preserved)
     // -----------------------------------------------------------------
 
@@ -125,12 +147,14 @@ public class ProductService {
     }
 
     public Product addProduct(Product product) {
+        validateProduct(product);
         return productRepository.save(product);
     }
 
     public Product updateProduct(Long id, Product updated) {
         Product existing = productRepository.findById(id).orElse(null);
         if (existing == null) return null;
+        validateProduct(updated);
         existing.setProductName(updated.getProductName());
         existing.setProductSKU(updated.getProductSKU());
         existing.setProductPrice(updated.getProductPrice());
