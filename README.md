@@ -112,8 +112,6 @@ The `com.example.demo.data.domain` package contains the following domain objects
 - **SupportTicket** (`@Entity`): a partner-raised support request with subject, urgency, lifecycle state, and a conversation thread of messages.
 - **Address** (`@Embeddable`): a structured address used inside Partner.
 - **TicketMessage** (`@Embeddable`): a single message (author, content, timestamp) stored as part of a SupportTicket's conversation thread.
-> ### 🚧 Placeholder Image Domain Model
-![](images/domain-model.png)
 
 ### Business Logic 
 > 🚧 : Describe the business logic for **at least one business service** in detail. If available, show the expected path and HTPP method. The remaining documentation of APIs shall be made available in the swagger endpoint. The default Swagger UI page is available at /swagger-ui.html.
