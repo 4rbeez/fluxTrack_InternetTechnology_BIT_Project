@@ -99,6 +99,7 @@ Domain model:
 
 <img width="567" height="467" alt="image" src="https://github.com/user-attachments/assets/967db2f1-79fc-4889-a5c5-01021e537e84" />
 
+
 Layered Architecture:
 
 <img width="1047" height="480" alt="image" src="https://github.com/user-attachments/assets/96328a78-b5cf-4f3d-aab1-f39d2b81416b" />
