@@ -86,19 +86,21 @@ On the Products page, the user can add a new product via a pop-up where they ent
 Login Screen:
 <img width="973" height="689" alt="image" src="https://github.com/user-attachments/assets/7255a249-f960-416f-9f05-152fae2eb4c7" />
 
-Product Overview / Homepage
+Product Overview / Homepage:
 <img width="936" height="664" alt="image" src="https://github.com/user-attachments/assets/ee1075c0-bc08-4ab0-8fdd-695cbe6d2c0d" />
 
-Add Product Screen
+Add Product Screen:
 <img width="972" height="689" alt="image" src="https://github.com/user-attachments/assets/62d658ac-b925-4c2a-b7d0-4840e4aa0fab" />
 
 ### Domain Design
 > 🚧: Provide a picture and describe your domain model; you may use Entity-Relationship Model or UML class diagram. Both can be created in Visual Paradigm - we have an academic license for it.
 
 Domain model:
+
 <img width="567" height="467" alt="image" src="https://github.com/user-attachments/assets/967db2f1-79fc-4889-a5c5-01021e537e84" />
 
 Layered Architecture:
+
 <img width="1047" height="480" alt="image" src="https://github.com/user-attachments/assets/96328a78-b5cf-4f3d-aab1-f39d2b81416b" />
 
 The `com.example.demo.data.domain` package contains the following domain objects / entities including getters and setters:
