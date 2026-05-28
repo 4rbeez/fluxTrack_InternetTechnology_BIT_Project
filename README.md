@@ -66,6 +66,18 @@ fluxTrack is a web application for fluxed GmbH and its partners to manage produc
 ## Design
 > 🚧: Keep in mind the Corporate Identity (CI); you shall decide appropriately the color schema, graphics, typography, layout, User Experience (UX), and so on.
 
+### Use Case Diagram
+
+<img width="887" height="745" alt="image" src="https://github.com/user-attachments/assets/600af391-a386-4cb9-99da-f143601953f7" />
+
+### Domain Model
+
+<img width="567" height="467" alt="image" src="https://github.com/user-attachments/assets/967db2f1-79fc-4889-a5c5-01021e537e84" />
+
+### Layered Architecture
+
+<img width="1047" height="480" alt="image" src="https://github.com/user-attachments/assets/96328a78-b5cf-4f3d-aab1-f39d2b81416b" />
+
 ### Wireframe
 > 🚧: It is suggested to start with a wireframe. The wireframe focuses on the website structure (Sitemap planning), sketching the pages using Wireframe components (e.g., header, menu, footer) and UX. You can create a wireframe already with draw.io or similar tools. 
 
