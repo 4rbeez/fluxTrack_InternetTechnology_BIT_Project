@@ -1014,3 +1014,29 @@ body.sidebar-collapsed .topbar-toggle { visibility: visible; }
 .chart-bar:hover {
     fill: var(--color-gold-dark);
 }
+
+/* ---------------------------------------------------------------
+   Server-side pagination controls
+   Sits below the data table on Products and Order History.
+   Hidden automatically when there's only one page (JS adds .hidden).
+--------------------------------------------------------------- */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 0 4px;
+    margin-top: 8px;
+    border-top: 1px solid var(--color-border-soft);
+}
+.pagination .page-indicator {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    min-width: 100px;
+    text-align: center;
+    user-select: none;
+}
+.pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

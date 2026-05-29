@@ -1,42 +1,55 @@
 // =============================================================
 // fluxTrack - products.js
-// Drives the Product Overview page:
-//   - fetches products and partners from the backend
-//   - renders the table (with computed Status from quantity)
-//   - search + filter
-//   - +/- quantity adjustment (PUT /product/{id})
+// Drives the Product Overview page (server-side paginated).
+//   - Fetches one page from /product/page with search/filter params
+//   - Search input is debounced (300ms); filter change resets to page 0
+//   - +/- quantity adjustment (PUT /product/{id} or POST /order/sale)
 //   - "Add new product" modal (POST /product/add)
 //   - Edit modal reuses the same form; submit goes to PUT /product/{id}
 //   - Admin-only partner picker in the modal
 //   - Per-partner placeholder text in the modal (wine vs. board games)
-//   - Row checkboxes with select-all + bulk delete
-//   - Delete with confirmation (single + bulk)
+//   - Row checkboxes with select-all (page-scoped) + bulk delete
+//   - Selected IDs persist across page changes via a Set
+//   - Delete with confirmation (single + bulk); refetches current page
 // =============================================================
 
 requireAuth();
 
-let allProducts = [];
-const partnerLookup = {};   // { partnerID: partnerName }
+// ----- Pagination state -----
+const PAGE_SIZE = 10;
+let currentPage = 0;
+let totalPages  = 0;
+
+// Active filter values — set before calling loadProductsPage()
+let currentSearch = '';
+let currentFilter = '';
+
+// Products visible on the current page
+let currentPageProducts = [];
+
+// ----- Supporting state -----
+const partnerLookup = {};   // { partnerID: partnerName } — fetched once
 const isAdmin = getUser() === 'admin';
 
-// Set of productIDs (as strings) currently selected via checkbox.
-// Tracked separately from the DOM so the selection survives re-renders
-// triggered by search/filter changes.
+// Selection persists across page changes. Bulk delete operates on every
+// productID in this Set, regardless of which page the row was checked on.
 const selectedProductIds = new Set();
 
-// Pending delete state. Always an array; single-row delete is a 1-element
-// array, bulk delete is a multi-element array. Drives the confirm modal.
+// Drives the confirm-delete modal: 1-element for single, multi for bulk.
 let pendingProductDeleteIds = [];
 
-// When set, the modal is in edit mode and submit will PUT instead of POST.
+// When set, the new/edit modal is in edit mode and submit will PUT instead of POST.
 let editingProduct = null;
+
+// Debounce timer for the search input — avoids hammering the server on every keystroke.
+let searchDebounce = null;
+const SEARCH_DEBOUNCE_MS = 300;
 
 // -------------------------------------------------------------
 // Per-partner placeholder text for the "Add new product" modal.
 // Wylaade sells wine; Drachehöhli sells board games. Showing
-// partner-appropriate examples makes the form feel native to
-// whichever shop is using it. Admin sees a neutral set until
-// they pick a partner from the dropdown.
+// partner-appropriate examples makes the form feel native.
+// Admin sees generic placeholders until they pick a partner.
 // -------------------------------------------------------------
 const USERNAME_TO_PARTNER_ID = {
     'wylaade': 1,
@@ -99,22 +112,39 @@ async function loadPartners() {
     }
 }
 
-async function loadProducts() {
+// Fetch one page from the server. Always reads currentPage / currentSearch /
+// currentFilter — callers set those first if they want a different slice.
+async function loadProductsPage() {
     const tbody = document.getElementById('products-tbody');
+    const params = new URLSearchParams({
+        page: String(currentPage),
+        size: String(PAGE_SIZE),
+    });
+    if (currentSearch) params.set('search', currentSearch);
+    if (currentFilter) params.set('filter', currentFilter);
+
     try {
-        const res = await authFetch('/product/');
+        const res = await authFetch('/product/page?' + params.toString());
         if (!res) return;
         if (!res.ok) {
             tbody.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load products (HTTP ${res.status})</td></tr>`;
             return;
         }
-        allProducts = await res.json();
-        // Drop selections for products that no longer exist (e.g. after a delete)
-        const stillExisting = new Set(allProducts.map(p => String(p.productID)));
-        Array.from(selectedProductIds).forEach(id => {
-            if (!stillExisting.has(id)) selectedProductIds.delete(id);
-        });
-        applySearchFilter();
+        const data = await res.json();
+        currentPageProducts = data.content || [];
+        totalPages = data.totalPages || 0;
+
+        // If a delete emptied the last page and we're not already at 0, step back.
+        if (currentPageProducts.length === 0 && currentPage > 0 && totalPages > 0) {
+            currentPage = Math.max(0, totalPages - 1);
+            await loadProductsPage();
+            return;
+        }
+
+        // renderProducts() restores checkbox state from selectedProductIds on every
+        // render, so cross-page selections survive page changes automatically.
+        renderProducts(currentPageProducts);
+        renderPagination();
     } catch (err) {
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load products</td></tr>`;
@@ -163,6 +193,22 @@ function renderProducts(products) {
     updateBulkActionBar();
 }
 
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    const prev      = document.getElementById('page-prev');
+    const next      = document.getElementById('page-next');
+    const indicator = document.getElementById('page-indicator');
+
+    if (totalPages <= 1) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+    prev.disabled = currentPage <= 0;
+    next.disabled = currentPage >= totalPages - 1;
+    indicator.textContent = `Page ${currentPage + 1} of ${totalPages}`;
+}
+
 function escapeHtml(str) {
     return String(str)
         .replaceAll('&', '&amp;')
@@ -172,39 +218,56 @@ function escapeHtml(str) {
 }
 
 // -------------------------------------------------------------
-// Search & filter
+// Search & filter — any change resets to page 0 and refetches
 // -------------------------------------------------------------
-function applySearchFilter() {
-    const term = document.getElementById('search-input').value.trim().toLowerCase();
-    const filter = document.getElementById('filter-select').value;
-    const filtered = allProducts.filter(p => {
-        const matchesTerm = !term ||
-            (p.productName && p.productName.toLowerCase().includes(term)) ||
-            (p.productSKU && p.productSKU.toLowerCase().includes(term));
-        const qty = p.productQuantity ?? 0;
-        const matchesFilter =
-            !filter ||
-            (filter === 'instock' && qty > 0) ||
-            (filter === 'outofstock' && qty <= 0);
-        return matchesTerm && matchesFilter;
-    });
-    renderProducts(filtered);
+function onFilterChange() {
+    currentSearch = document.getElementById('search-input').value.trim();
+    currentFilter = document.getElementById('filter-select').value;
+    currentPage = 0;
+    loadProductsPage();
 }
 
-document.getElementById('search-btn').addEventListener('click', applySearchFilter);
-document.getElementById('search-input').addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') applySearchFilter();
+function onSearchInput() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(onFilterChange, SEARCH_DEBOUNCE_MS);
+}
+
+document.getElementById('search-btn').addEventListener('click', () => {
+    clearTimeout(searchDebounce);
+    onFilterChange();
 });
-document.getElementById('search-input').addEventListener('input', applySearchFilter);
-document.getElementById('filter-select').addEventListener('change', applySearchFilter);
+document.getElementById('search-input').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        clearTimeout(searchDebounce);
+        onFilterChange();
+    }
+});
+document.getElementById('search-input').addEventListener('input', onSearchInput);
+document.getElementById('filter-select').addEventListener('change', onFilterChange);
 
 // -------------------------------------------------------------
-// Row actions: edit + delete + quantity buttons (event delegation)
+// Pagination button handlers
+// -------------------------------------------------------------
+document.getElementById('page-prev').addEventListener('click', () => {
+    if (currentPage > 0) {
+        currentPage--;
+        loadProductsPage();
+    }
+});
+document.getElementById('page-next').addEventListener('click', () => {
+    if (currentPage < totalPages - 1) {
+        currentPage++;
+        loadProductsPage();
+    }
+});
+
+// -------------------------------------------------------------
+// Row actions: edit + delete + qty buttons (event delegation)
 // -------------------------------------------------------------
 document.getElementById('products-tbody').addEventListener('click', async (e) => {
     const editBtn = e.target.closest('.product-edit-btn');
     if (editBtn) {
-        const product = allProducts.find(p => String(p.productID) === editBtn.dataset.id);
+        const product = currentPageProducts.find(p => String(p.productID) === editBtn.dataset.id);
         if (product) openEditModal(product);
         return;
     }
@@ -218,9 +281,9 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
     const btn = e.target.closest('.qty-btn');
     if (!btn || btn.disabled) return;
 
-    const id = btn.dataset.id;
+    const id    = btn.dataset.id;
     const delta = parseInt(btn.dataset.delta, 10);
-    const product = allProducts.find(p => String(p.productID) === id);
+    const product = currentPageProducts.find(p => String(p.productID) === id);
     if (!product) return;
 
     btn.disabled = true;
@@ -231,46 +294,42 @@ document.getElementById('products-tbody').addEventListener('click', async (e) =>
             method: 'POST',
             body: JSON.stringify({ productID: product.productID, quantity: 1 }),
         });
-        btn.disabled = false;
         if (res && res.ok) {
-            product.productQuantity = Math.max(0, (product.productQuantity ?? 0) - 1);
-            applySearchFilter();
+            await loadProductsPage();
         } else {
             console.error('Failed to record sale', res && res.status);
+            btn.disabled = false;
         }
         return;
     }
 
     // Increment = restock (no order recorded, pure inventory PUT)
-    const newQty = (product.productQuantity ?? 0) + delta;
     const updated = {
         productID: product.productID,
         productName: product.productName,
         productSKU: product.productSKU,
         productPrice: product.productPrice,
-        productQuantity: newQty,
+        productQuantity: (product.productQuantity ?? 0) + delta,
         productPartnerID: product.productPartnerID,
     };
     const res = await authFetch(`/product/${id}`, {
         method: 'PUT',
         body: JSON.stringify(updated),
     });
-    btn.disabled = false;
     if (res && res.ok) {
-        product.productQuantity = newQty;
-        applySearchFilter();
+        await loadProductsPage();
     } else {
         console.error('Failed to update quantity', res && res.status);
+        btn.disabled = false;
     }
 });
 
 // -------------------------------------------------------------
-// Checkbox handling: select-all + per-row selection
+// Checkbox handling: select-all (page-scoped) + per-row
 // -------------------------------------------------------------
 document.getElementById('select-all').addEventListener('change', (e) => {
     const checked = e.target.checked;
-    const visibleCheckboxes = document.querySelectorAll('#products-tbody input[type="checkbox"]');
-    visibleCheckboxes.forEach(cb => {
+    document.querySelectorAll('#products-tbody input[type="checkbox"]').forEach(cb => {
         cb.checked = checked;
         if (checked) {
             selectedProductIds.add(cb.dataset.id);
@@ -292,19 +351,20 @@ document.getElementById('products-tbody').addEventListener('change', (e) => {
     updateBulkActionBar();
 });
 
-// Reflects the count + drives the visibility of the bulk-action-bar.
-// Also computes the tri-state (checked / unchecked / indeterminate) for select-all
-// based on what's currently visible.
+// The count label shows the GLOBAL selection (across all pages) so the user
+// knows they still have selections on other pages. Tri-state reflects the
+// current page only (what's visible).
 function updateBulkActionBar() {
     const visibleCheckboxes = document.querySelectorAll('#products-tbody input[type="checkbox"]');
-    const checkedCount = Array.from(visibleCheckboxes).filter(cb => cb.checked).length;
-    const totalVisible = visibleCheckboxes.length;
+    const checkedCount  = Array.from(visibleCheckboxes).filter(cb => cb.checked).length;
+    const totalVisible  = visibleCheckboxes.length;
+    const totalSelected = selectedProductIds.size;
 
     const bar = document.getElementById('bulk-action-bar');
     const countLabel = document.getElementById('bulk-action-count');
-    if (checkedCount > 0) {
+    if (totalSelected > 0) {
         bar.classList.remove('hidden');
-        countLabel.textContent = `${checkedCount} selected`;
+        countLabel.textContent = `${totalSelected} selected`;
     } else {
         bar.classList.add('hidden');
     }
@@ -341,8 +401,6 @@ openBtn.addEventListener('click', () => {
     editingProduct = null;
     modalTitleEl.textContent = 'Add new product';
     modal.classList.remove('hidden');
-    // Match the placeholders to whoever is logged in.
-    // Admin starts generic; placeholders update when they pick a partner below.
     if (isAdmin) {
         applyPlaceholders(null);
     } else {
@@ -368,12 +426,8 @@ function openEditModal(product) {
 }
 
 cancelBtn.addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-});
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-// Admin only: as they pick a partner, re-skin the placeholders to match.
-// Harmless for non-admin users (the picker is hidden and never fires change).
 document.getElementById('productPartnerID').addEventListener('change', (e) => {
     const raw = e.target.value;
     applyPlaceholders(raw ? parseInt(raw, 10) : null);
@@ -394,36 +448,27 @@ productForm.addEventListener('submit', async (e) => {
 
     const newProduct = {
         productName: document.getElementById('productName').value.trim(),
-        productSKU: document.getElementById('productSKU').value.trim(),
+        productSKU:  document.getElementById('productSKU').value.trim(),
         productPrice: parseFloat(document.getElementById('productPrice').value),
         productQuantity: parseInt(document.getElementById('productQuantity').value, 10),
     };
 
     if (isAdmin) {
         const partnerIdRaw = document.getElementById('productPartnerID').value;
-        if (!partnerIdRaw) {
-            errorDiv.textContent = 'Please select a partner.';
-            return;
-        }
+        if (!partnerIdRaw) { errorDiv.textContent = 'Please select a partner.'; return; }
         newProduct.productPartnerID = parseInt(partnerIdRaw, 10);
     } else if (editingProduct) {
-        // Non-admin editing: the partner picker is hidden, so carry the
-        // original partnerID forward — the backend expects it on PUT.
         newProduct.productPartnerID = editingProduct.productPartnerID;
     }
 
     if (!newProduct.productName || !newProduct.productSKU) {
-        errorDiv.textContent = 'Product Name and SKU are required.';
-        return;
+        errorDiv.textContent = 'Product Name and SKU are required.'; return;
     }
     if (isNaN(newProduct.productPrice) || isNaN(newProduct.productQuantity)) {
-        errorDiv.textContent = 'Price and Quantity must be numbers.';
-        return;
+        errorDiv.textContent = 'Price and Quantity must be numbers.'; return;
     }
-    if (newProduct.productPrice < 0){
-        errorDiv.textContent = 'Price cannot be negative.';
-        return;
-
+    if (newProduct.productPrice < 0) {
+        errorDiv.textContent = 'Price cannot be negative.'; return;
     }
 
     let res;
@@ -442,7 +487,7 @@ productForm.addEventListener('submit', async (e) => {
 
     if (res && res.ok) {
         closeModal();
-        await loadProducts();
+        await loadProductsPage();
     } else {
         const action = editingProduct ? 'update' : 'create';
         errorDiv.textContent = `Could not ${action} product${res ? ` (HTTP ${res.status})` : ''}. Check that all fields are valid.`;
@@ -458,12 +503,10 @@ const deleteMessageEl = document.getElementById('product-delete-message');
 const deleteErrorEl   = document.getElementById('product-delete-error');
 
 document.getElementById('cancel-product-delete-btn').addEventListener('click', closeProductDeleteModal);
-deleteModal.addEventListener('click', (e) => {
-    if (e.target === deleteModal) closeProductDeleteModal();
-});
+deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) closeProductDeleteModal(); });
 
 function openProductDeleteModal(id) {
-    const product = allProducts.find(p => String(p.productID) === String(id));
+    const product = currentPageProducts.find(p => String(p.productID) === String(id));
     if (!product) return;
     pendingProductDeleteIds = [String(id)];
     deleteTitleEl.textContent = 'Delete product?';
@@ -491,20 +534,14 @@ function closeProductDeleteModal() {
 document.getElementById('confirm-product-delete-btn').addEventListener('click', async () => {
     if (pendingProductDeleteIds.length === 0) return;
 
-    // Fire all deletes in parallel. For a small inventory this is fine; for
-    // a large bulk operation a dedicated batch endpoint would be better.
     const results = await Promise.all(
-        pendingProductDeleteIds.map(id =>
-            authFetch(`/product/${id}`, { method: 'DELETE' })
-        )
+        pendingProductDeleteIds.map(id => authFetch(`/product/${id}`, { method: 'DELETE' }))
     );
-
     const failed = results.filter(r => !r || !r.ok);
     if (failed.length === 0) {
-        // Drop the now-deleted IDs from the selection set
         pendingProductDeleteIds.forEach(id => selectedProductIds.delete(id));
         closeProductDeleteModal();
-        await loadProducts();
+        await loadProductsPage();
     } else {
         deleteErrorEl.textContent =
             `${failed.length} of ${pendingProductDeleteIds.length} product(s) could not be deleted.`;
@@ -516,13 +553,14 @@ document.getElementById('confirm-product-delete-btn').addEventListener('click', 
 // -------------------------------------------------------------
 (async () => {
     await loadPartners();
-    await loadProducts();
 
     // Pre-fill search from URL param (used when arriving from Dashboard)
     const urlParams = new URLSearchParams(window.location.search);
     const searchParam = urlParams.get('search');
     if (searchParam) {
         document.getElementById('search-input').value = searchParam;
-        applySearchFilter();
+        currentSearch = searchParam;
     }
+
+    await loadProductsPage();
 })();

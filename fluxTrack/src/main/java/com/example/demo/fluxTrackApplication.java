@@ -86,6 +86,11 @@ public class fluxTrackApplication {
 		productService.addProduct(makeProduct("00301", "Palmeri Blu 2014",               39.50, 10, wylaadeId));
 		productService.addProduct(makeProduct("00033", "Balatoni C-Cuvée 2019",          27.50, 16, wylaadeId));
 		productService.addProduct(makeProduct("00014", "Zambartas Maratheftiko 2019",    29.50, 22, wylaadeId));
+		productService.addProduct(makeProduct("00091", "Domaine Mont d'Or Petite Arvine 2022", 32.00, 18, wylaadeId));
+		productService.addProduct(makeProduct("00102", "Pinot Noir Twannberg 2021",      28.50, 12, wylaadeId));
+		productService.addProduct(makeProduct("00115", "Riesling-Sylvaner 2023",         18.90, 25, wylaadeId));
+		productService.addProduct(makeProduct("00128", "Cornalin du Valais 2020",        42.00,  8, wylaadeId));
+		productService.addProduct(makeProduct("00134", "Champagne Bollinger Special Cuvée NV", 75.00, 0, wylaadeId));
 
 		// ---------- Partner 2: Drachehöhli GmbH ----------
 		Partner drachehöhli = new Partner();
@@ -111,6 +116,11 @@ public class fluxTrackApplication {
 		productService.addProduct(makeProduct("00502", "Azul",                                      36.00,  4, drachehöhliId));
 		productService.addProduct(makeProduct("00503", "Magic - Lorwyn Eclipsed Draft Night (EN)",  89.90,  0, drachehöhliId));
 		productService.addProduct(makeProduct("00504", "Naruto TCG: Special Pack EN",               32.90, 12, drachehöhliId));
+		productService.addProduct(makeProduct("00505", "Wingspan + European Expansion",             79.90,  9, drachehöhliId));
+		productService.addProduct(makeProduct("00510", "Dungeons & Dragons Starter Set",            24.90, 35, drachehöhliId));
+		productService.addProduct(makeProduct("00518", "Pandemic Legacy: Season 1",                 64.90,  0, drachehöhliId));
+		productService.addProduct(makeProduct("00525", "7 Wonders Duel",                            32.50, 14, drachehöhliId));
+		productService.addProduct(makeProduct("00531", "MTG: Commander Deck Pack",                  39.90, 22, drachehöhliId));
 
 		// ---------- Seed historical orders (UC 304) ----------
 		List<Product> allProductsForSeed = productService.getAllProducts();
@@ -130,6 +140,19 @@ public class fluxTrackApplication {
 		seedOrderIfPresent(bySku, "00014", 1, now.minusDays(6).withHour(17).withMinute(30));
 		seedOrderIfPresent(bySku, "00301", 2, now.minusDays(3).withHour(10).withMinute(45));
 
+		// Additional Wylaade orders (extended history, ~60 days back)
+		seedOrderIfPresent(bySku, "00091", 4, now.minusDays(55).withHour(11).withMinute(20));
+		seedOrderIfPresent(bySku, "00102", 2, now.minusDays(50).withHour(15).withMinute(10));
+		seedOrderIfPresent(bySku, "00115", 8, now.minusDays(45).withHour(9).withMinute(40));
+		seedOrderIfPresent(bySku, "00128", 1, now.minusDays(40).withHour(14).withMinute(25));
+		seedOrderIfPresent(bySku, "00091", 3, now.minusDays(35).withHour(16).withMinute(50));
+		seedOrderIfPresent(bySku, "00102", 5, now.minusDays(23).withHour(12).withMinute(15));
+		seedOrderIfPresent(bySku, "00115", 12, now.minusDays(17).withHour(10).withMinute(30));
+		seedOrderIfPresent(bySku, "00083", 4, now.minusDays(13).withHour(15).withMinute(45));
+		seedOrderIfPresent(bySku, "00091", 2, now.minusDays(8).withHour(11).withMinute(10));
+		seedOrderIfPresent(bySku, "00128", 1, now.minusDays(5).withHour(14).withMinute(5));
+		seedOrderIfPresent(bySku, "00301", 1, now.minusDays(1).withHour(16).withMinute(30));
+
 		seedOrderIfPresent(bySku, "00501", 6, now.minusDays(27).withHour(11).withMinute(0));
 		seedOrderIfPresent(bySku, "00501", 12, now.minusDays(20).withHour(15).withMinute(20));
 		seedOrderIfPresent(bySku, "00504", 2, now.minusDays(17).withHour(14).withMinute(5));
@@ -137,6 +160,20 @@ public class fluxTrackApplication {
 		seedOrderIfPresent(bySku, "00501", 6, now.minusDays(10).withHour(12).withMinute(30));
 		seedOrderIfPresent(bySku, "00504", 4, now.minusDays(7).withHour(16).withMinute(15));
 		seedOrderIfPresent(bySku, "00502", 1, now.minusDays(2).withHour(11).withMinute(45));
+
+		// Additional Drachehöhli orders (extended history, ~60 days back)
+		seedOrderIfPresent(bySku, "00505", 3, now.minusDays(58).withHour(13).withMinute(15));
+		seedOrderIfPresent(bySku, "00510", 8, now.minusDays(52).withHour(10).withMinute(30));
+		seedOrderIfPresent(bySku, "00518", 1, now.minusDays(48).withHour(15).withMinute(0));
+		seedOrderIfPresent(bySku, "00525", 2, now.minusDays(42).withHour(11).withMinute(45));
+		seedOrderIfPresent(bySku, "00531", 6, now.minusDays(38).withHour(14).withMinute(20));
+		seedOrderIfPresent(bySku, "00501", 10, now.minusDays(32).withHour(16).withMinute(10));
+		seedOrderIfPresent(bySku, "00510", 4, now.minusDays(25).withHour(12).withMinute(5));
+		seedOrderIfPresent(bySku, "00525", 3, now.minusDays(18).withHour(15).withMinute(35));
+		seedOrderIfPresent(bySku, "00531", 5, now.minusDays(11).withHour(10).withMinute(20));
+		seedOrderIfPresent(bySku, "00518", 2, now.minusDays(7).withHour(14).withMinute(40));
+		seedOrderIfPresent(bySku, "00510", 2, now.minusDays(4).withHour(11).withMinute(55));
+		seedOrderIfPresent(bySku, "00505", 1, now.minusDays(1).withHour(16).withMinute(0));
 
 		// ---------- Seed support tickets (UC 107) ----------
 

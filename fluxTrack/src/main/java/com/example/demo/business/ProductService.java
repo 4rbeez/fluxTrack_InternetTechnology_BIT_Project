@@ -3,6 +3,9 @@ package com.example.demo.business;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -59,10 +62,6 @@ public class ProductService {
     // -----------------------------------------------------------------
     // BUSINESS RULE 2 (UC 5 - Delete a Product)
     // -----------------------------------------------------------------
-    // - Admin can delete any product
-    // - Partner users can only delete products they own
-    // Returns false if the deletion was denied or the product does not exist.
-    // -----------------------------------------------------------------
     public boolean deleteProductForUser(Long productId, Authentication auth) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product == null) return false;
@@ -77,7 +76,7 @@ public class ProductService {
         Long callerPartnerId = resolvePartnerIdFromUsername(username);
         if (callerPartnerId == null) return false;
         if (!callerPartnerId.equals(product.getProductPartnerID())) {
-            return false; // Partner trying to delete someone else's product
+            return false;
         }
         productRepository.deleteById(productId);
         return true;
@@ -85,15 +84,6 @@ public class ProductService {
 
     // -----------------------------------------------------------------
     // Ownership-protected update (mirrors UC 5 / deleteProductForUser)
-    // -----------------------------------------------------------------
-    // - Admin can update any product, including reassigning partnerID
-    // - Partner users can only update products they own; any partnerID
-    //   in the request body is forced back to the caller's partnerID
-    //   so a partner cannot reassign a product to another partner via
-    //   a hand-crafted PUT
-    // Returns null if the update was denied or the product does not exist.
-    // Throws IllegalArgumentException if the payload fails validation
-    // (e.g. negative price or quantity).
     // -----------------------------------------------------------------
     public Product updateProductForUser(Long id, Product updated, Authentication auth) {
         if (auth == null) return null;
@@ -105,22 +95,61 @@ public class ProductService {
             Long callerPartnerId = resolvePartnerIdFromUsername(username);
             if (callerPartnerId == null) return null;
             if (!callerPartnerId.equals(existing.getProductPartnerID())) {
-                return null; // Partner trying to update someone else's product
+                return null;
             }
-            // Defensive: even if the body specified a different partnerID,
-            // force it back to the caller's. Partners cannot give products away.
             updated.setProductPartnerID(callerPartnerId);
         }
         return updateProduct(id, updated);
     }
 
     // -----------------------------------------------------------------
+    // Server-side pagination + filtering
+    // -----------------------------------------------------------------
+    // Returns one page of products visible to the caller. Applies the
+    // role-based visibility filter from Rule 1, then layers an optional
+    // search term (matches productName OR productSKU, case-insensitive)
+    // and stock-status filter. All predicates are composed into a JPA
+    // Specification so the database does the filtering and pagination —
+    // we never load the full inventory into memory.
+    // -----------------------------------------------------------------
+    public Page<Product> getProductsPaged(Authentication auth, String search, String filter, Pageable pageable) {
+        if (auth == null) return Page.empty(pageable);
+        String username = auth.getName();
+
+        // Start with an always-true predicate so we can .and() unconditionally.
+        Specification<Product> spec = (root, query, cb) -> cb.conjunction();
+
+        // Role-based scope (UC 301)
+        if (!"admin".equals(username)) {
+            Long partnerId = resolvePartnerIdFromUsername(username);
+            if (partnerId == null) return Page.empty(pageable);
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("productPartnerID"), partnerId));
+        }
+
+        // Search: name OR SKU
+        if (search != null && !search.isBlank()) {
+            String pattern = "%" + search.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                cb.like(cb.lower(root.get("productName")), pattern),
+                cb.like(cb.lower(root.get("productSKU")), pattern)
+            ));
+        }
+
+        // Stock-status filter
+        if ("instock".equalsIgnoreCase(filter)) {
+            spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("productQuantity"), 0));
+        } else if ("outofstock".equalsIgnoreCase(filter)) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("productQuantity"), 0));
+        }
+
+        return productRepository.findAll(spec, pageable);
+    }
+
+    // -----------------------------------------------------------------
     // Payload validation — applied on both create and update.
-    // Frontend forms already block negative values via input[min=0], but
-    // a hand-crafted HTTP request (curl, devtools) can bypass that, so
-    // the service layer enforces it as the last line of defence.
-    // Throws IllegalArgumentException, which the controllers translate
-    // to HTTP 400 Bad Request.
+    // The frontend already blocks negative values via input[min=0], but
+    // a hand-crafted request can bypass that. Throws IllegalArgumentException,
+    // which the controllers translate to HTTP 400.
     // -----------------------------------------------------------------
     private void validateProduct(Product product) {
         if (product == null) {
@@ -135,9 +164,8 @@ public class ProductService {
     }
 
     // -----------------------------------------------------------------
-    // CRUD methods (existing behaviour preserved)
+    // CRUD methods
     // -----------------------------------------------------------------
-
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
