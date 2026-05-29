@@ -5,8 +5,9 @@
 // to /login if the token is missing or rejected.
 // =============================================================
 
-const TOKEN_KEY = 'fluxtrack_token';
-const USER_KEY = 'fluxtrack_user';
+const TOKEN_KEY   = 'fluxtrack_token';
+const USER_KEY    = 'fluxtrack_user';
+const PROFILE_KEY = 'fluxtrack_profile';
 
 function getToken() {
     return localStorage.getItem(TOKEN_KEY);
@@ -14,6 +15,11 @@ function getToken() {
 
 function getUser() {
     return localStorage.getItem(USER_KEY);
+}
+
+function getCachedProfile() {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
 }
 
 function setAuth(token, username) {
@@ -24,6 +30,7 @@ function setAuth(token, username) {
 function clearAuth() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(PROFILE_KEY);
 }
 
 function logout() {
@@ -58,6 +65,21 @@ async function authFetch(url, options = {}) {
         return null;
     }
     return response;
+}
+
+/** Fetch the user profile from the API and cache it in localStorage. */
+async function fetchAndCacheProfile() {
+    try {
+        const resp = await authFetch('/user/profile');
+        if (resp && resp.ok) {
+            const profile = await resp.json();
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            return profile;
+        }
+    } catch (e) {
+        console.warn('Could not fetch user profile:', e);
+    }
+    return null;
 }
 
 // =============================================================
@@ -99,6 +121,11 @@ if (loginForm) {
             if (!token) throw new Error('Empty token returned by server');
 
             setAuth(token, username);
+
+            // Fetch & cache the user profile before navigating away.
+            // This populates displayName + logo for the topbar on the next page.
+            await fetchAndCacheProfile();
+
             window.location.href = '/dashboard';
         } catch (err) {
             errorDiv.textContent = err.message;
@@ -110,17 +137,11 @@ if (loginForm) {
 // Topbar: logo + display name + logout (present on app pages)
 // =============================================================
 
-// Map technical login username → display name + logo file.
-// Keeping the lookup here means the topbar fragment stays static
-// HTML and any page that includes the fragment gets the swap for free.
-const USER_PROFILES = {
-    'admin':        { displayName: 'Administrator',    logo: '/images/partners/fluxed.png' },
-    'wylaade':      { displayName: 'Wylaade GmbH',     logo: '/images/partners/wylaade.png' },
-    'drachehoehli': { displayName: 'Drachehöhli GmbH', logo: '/images/partners/drachehoehli.png' },
-};
-
+// Profile is fetched from /user/profile at login and cached in localStorage.
+// This replaces the old hardcoded USER_PROFILES map — new users created by
+// admin will show correct names/logos without touching this file.
 const currentUsername = getUser();
-const currentProfile  = currentUsername ? USER_PROFILES[currentUsername] : null;
+const currentProfile = getCachedProfile();
 
 const companyNameEl = document.getElementById('company-name');
 if (companyNameEl && currentUsername) {
@@ -128,9 +149,9 @@ if (companyNameEl && currentUsername) {
 }
 
 const companyLogoEl = document.getElementById('company-logo');
-if (companyLogoEl && currentProfile) {
-    companyLogoEl.src = currentProfile.logo;
-    companyLogoEl.alt = currentProfile.displayName + ' logo';
+if (companyLogoEl && currentProfile && currentProfile.avatarUrl) {
+    companyLogoEl.src = currentProfile.avatarUrl;
+    companyLogoEl.alt = (currentProfile.displayName || currentUsername) + ' logo';
 }
 
 const logoutBtn = document.getElementById('logout-btn');
@@ -139,7 +160,7 @@ if (logoutBtn) {
 }
 
 // Hide admin-only sidebar items for non-admin users.
-if (currentUsername && currentUsername !== 'admin') {
+if (currentUsername && (!currentProfile || currentProfile.role !== 'ADMIN')) {
     const partnersLink = document.getElementById('sidebar-partners');
     if (partnersLink) {
         partnersLink.classList.add('hidden');
@@ -149,11 +170,6 @@ if (currentUsername && currentUsername !== 'admin') {
 // =============================================================
 // Sidebar collapse toggle
 // =============================================================
-// Two hamburger buttons cooperate: the one in the sidebar (visible
-// when the sidebar is shown) and the one in the topbar (which is
-// visibility:hidden until the sidebar is collapsed). Clicking either
-// flips a body class and the CSS does the rest. State persists across
-// navigation in localStorage so it doesn't reset on every page load.
 const SIDEBAR_COLLAPSED_KEY = 'fluxtrack_sidebarCollapsed';
 
 function applySidebarState() {

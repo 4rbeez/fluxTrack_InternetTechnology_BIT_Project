@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.business.AppUserService;
 import com.example.demo.business.OrderService;
 import com.example.demo.business.PartnerService;
 import com.example.demo.business.ProductService;
@@ -38,6 +39,8 @@ public class fluxTrackApplication {
 	private OrderService orderService;
 	@Autowired
 	private SupportTicketService ticketService;
+	@Autowired
+	private AppUserService appUserService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(fluxTrackApplication.class, args);
@@ -122,6 +125,11 @@ public class fluxTrackApplication {
 		productService.addProduct(makeProduct("00525", "7 Wonders Duel",                            32.50, 14, drachehöhliId));
 		productService.addProduct(makeProduct("00531", "MTG: Commander Deck Pack",                  39.90, 22, drachehöhliId));
 
+		// ---------- Seed application users (replaces InMemoryUserDetailsManager) ----------
+		appUserService.seedUser("wylaade",      "password", "PARTNER", wylaadeId,      "Wylaade GmbH",     "/images/partners/wylaade.png");
+		appUserService.seedUser("drachehoehli", "password", "PARTNER", drachehöhliId,  "Drachehöhli GmbH", "/images/partners/drachehoehli.png");
+		appUserService.seedUser("admin",        "admin",    "ADMIN",   null,           "Administrator",    "/images/partners/fluxed.png");
+
 		// ---------- Seed historical orders (UC 304) ----------
 		List<Product> allProductsForSeed = productService.getAllProducts();
 		LocalDateTime now = LocalDateTime.now();
@@ -140,7 +148,6 @@ public class fluxTrackApplication {
 		seedOrderIfPresent(bySku, "00014", 1, now.minusDays(6).withHour(17).withMinute(30));
 		seedOrderIfPresent(bySku, "00301", 2, now.minusDays(3).withHour(10).withMinute(45));
 
-		// Additional Wylaade orders (extended history, ~60 days back)
 		seedOrderIfPresent(bySku, "00091", 4, now.minusDays(55).withHour(11).withMinute(20));
 		seedOrderIfPresent(bySku, "00102", 2, now.minusDays(50).withHour(15).withMinute(10));
 		seedOrderIfPresent(bySku, "00115", 8, now.minusDays(45).withHour(9).withMinute(40));
@@ -161,7 +168,6 @@ public class fluxTrackApplication {
 		seedOrderIfPresent(bySku, "00504", 4, now.minusDays(7).withHour(16).withMinute(15));
 		seedOrderIfPresent(bySku, "00502", 1, now.minusDays(2).withHour(11).withMinute(45));
 
-		// Additional Drachehöhli orders (extended history, ~60 days back)
 		seedOrderIfPresent(bySku, "00505", 3, now.minusDays(58).withHour(13).withMinute(15));
 		seedOrderIfPresent(bySku, "00510", 8, now.minusDays(52).withHour(10).withMinute(30));
 		seedOrderIfPresent(bySku, "00518", 1, now.minusDays(48).withHour(15).withMinute(0));
@@ -177,7 +183,6 @@ public class fluxTrackApplication {
 
 		// ---------- Seed support tickets (UC 107) ----------
 
-		// 1. Wylaade — OPEN, no admin reply yet (1 message)
 		ticketService.seedTicket(
 			wylaadeId,
 			"Cannot log in after password reset",
@@ -191,7 +196,6 @@ public class fluxTrackApplication {
 			)
 		);
 
-		// 2. Wylaade — ANSWERED, admin has responded (2 messages)
 		ticketService.seedTicket(
 			wylaadeId,
 			"Stock count for Palmeri Blu wrong after import",
@@ -208,7 +212,6 @@ public class fluxTrackApplication {
 			)
 		);
 
-		// 3. Drachehöhli — RESOLVED (3 messages)
 		ticketService.seedTicket(
 			drachehöhliId,
 			"How do I export a price list?",
@@ -228,7 +231,6 @@ public class fluxTrackApplication {
 			)
 		);
 
-		// 4. Drachehöhli — COMPLETED (long-closed)
 		ticketService.seedTicket(
 			drachehöhliId,
 			"Welcome onboarding — account setup completed",
@@ -252,7 +254,6 @@ public class fluxTrackApplication {
 		);
 	}
 
-	// Helper: insert a seeded order if the product with this SKU exists
 	private void seedOrderIfPresent(Map<String, Product> bySku, String sku, int quantity, LocalDateTime when) {
 		Product p = bySku.get(sku);
 		if (p != null) {
