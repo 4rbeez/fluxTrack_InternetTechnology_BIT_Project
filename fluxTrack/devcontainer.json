@@ -1,0 +1,35 @@
+{
+    "name": "fluxTrack",
+    "image": "mcr.microsoft.com/devcontainers/java:21-bookworm",
+
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "21",
+            "installMaven": "true"
+        }
+    },
+
+    "forwardPorts": [8080],
+    "portsAttributes": {
+        "8080": {
+            "label": "fluxTrack App",
+            "onAutoForward": "openBrowser"
+        }
+    },
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack",
+                "vmware.vscode-spring-boot",
+                "vscjava.vscode-spring-initializr",
+                "vscjava.vscode-maven"
+            ],
+            "settings": {
+                "java.configuration.updateBuildConfiguration": "automatic"
+            }
+        }
+    },
+
+    "postCreateCommand": "cd fluxTrack && chmod +x mvnw && ./mvnw clean install -DskipTests"
+}
