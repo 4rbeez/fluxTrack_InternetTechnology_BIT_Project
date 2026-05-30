@@ -165,6 +165,10 @@ if (currentUsername && (!currentProfile || currentProfile.role !== 'ADMIN')) {
     if (partnersLink) {
         partnersLink.classList.add('hidden');
     }
+    const usersLink = document.getElementById('sidebar-users');
+    if (usersLink) {
+        usersLink.classList.add('hidden');
+    }
 }
 
 // =============================================================

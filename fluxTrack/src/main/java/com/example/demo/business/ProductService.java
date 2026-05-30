@@ -18,45 +18,28 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private AppUserService appUserService;
+
     // -----------------------------------------------------------------
     // BUSINESS RULE 1 (UC 301 - Show product overview)
     // -----------------------------------------------------------------
-    // - User "admin" sees ALL products
-    // - Partner users see ONLY their own products
-    // -----------------------------------------------------------------
     public List<Product> getProductsForUser(Authentication auth) {
-        if (auth == null) {
-            return List.of();
-        }
+        if (auth == null) return List.of();
         String username = auth.getName();
-        if ("admin".equals(username)) {
+        if (appUserService.isAdminUser(username)) {
             return productRepository.findAll();
         }
-        Long partnerId = resolvePartnerIdFromUsername(username);
-        if (partnerId == null) {
-            return List.of();
-        }
+        Long partnerId = appUserService.getPartnerIdForUsername(username);
+        if (partnerId == null) return List.of();
         return productRepository.findByProductPartnerID(partnerId);
     }
 
-    /**
-     * Used by ProductController.addProduct() to enforce partner ownership on create.
-     * Returns null for admin (admin must specify partner ID explicitly).
-     */
     public Long resolvePartnerIdForUser(Authentication auth) {
         if (auth == null) return null;
         String username = auth.getName();
-        if ("admin".equals(username)) return null;
-        return resolvePartnerIdFromUsername(username);
-    }
-
-    private Long resolvePartnerIdFromUsername(String username) {
-        if (username == null) return null;
-        switch (username) {
-            case "wylaade":     return 1L;
-            case "drachehoehli": return 2L;
-            default:            return null;
-        }
+        if (appUserService.isAdminUser(username)) return null;
+        return appUserService.getPartnerIdForUsername(username);
     }
 
     // -----------------------------------------------------------------
@@ -68,22 +51,20 @@ public class ProductService {
         if (auth == null) return false;
 
         String username = auth.getName();
-        if ("admin".equals(username)) {
+        if (appUserService.isAdminUser(username)) {
             productRepository.deleteById(productId);
             return true;
         }
 
-        Long callerPartnerId = resolvePartnerIdFromUsername(username);
+        Long callerPartnerId = appUserService.getPartnerIdForUsername(username);
         if (callerPartnerId == null) return false;
-        if (!callerPartnerId.equals(product.getProductPartnerID())) {
-            return false;
-        }
+        if (!callerPartnerId.equals(product.getProductPartnerID())) return false;
         productRepository.deleteById(productId);
         return true;
     }
 
     // -----------------------------------------------------------------
-    // Ownership-protected update (mirrors UC 5 / deleteProductForUser)
+    // Ownership-protected update
     // -----------------------------------------------------------------
     public Product updateProductForUser(Long id, Product updated, Authentication auth) {
         if (auth == null) return null;
@@ -91,12 +72,10 @@ public class ProductService {
         if (existing == null) return null;
 
         String username = auth.getName();
-        if (!"admin".equals(username)) {
-            Long callerPartnerId = resolvePartnerIdFromUsername(username);
+        if (!appUserService.isAdminUser(username)) {
+            Long callerPartnerId = appUserService.getPartnerIdForUsername(username);
             if (callerPartnerId == null) return null;
-            if (!callerPartnerId.equals(existing.getProductPartnerID())) {
-                return null;
-            }
+            if (!callerPartnerId.equals(existing.getProductPartnerID())) return null;
             updated.setProductPartnerID(callerPartnerId);
         }
         return updateProduct(id, updated);
@@ -105,28 +84,18 @@ public class ProductService {
     // -----------------------------------------------------------------
     // Server-side pagination + filtering
     // -----------------------------------------------------------------
-    // Returns one page of products visible to the caller. Applies the
-    // role-based visibility filter from Rule 1, then layers an optional
-    // search term (matches productName OR productSKU, case-insensitive)
-    // and stock-status filter. All predicates are composed into a JPA
-    // Specification so the database does the filtering and pagination —
-    // we never load the full inventory into memory.
-    // -----------------------------------------------------------------
     public Page<Product> getProductsPaged(Authentication auth, String search, String filter, Pageable pageable) {
         if (auth == null) return Page.empty(pageable);
         String username = auth.getName();
 
-        // Start with an always-true predicate so we can .and() unconditionally.
         Specification<Product> spec = (root, query, cb) -> cb.conjunction();
 
-        // Role-based scope (UC 301)
-        if (!"admin".equals(username)) {
-            Long partnerId = resolvePartnerIdFromUsername(username);
+        if (!appUserService.isAdminUser(username)) {
+            Long partnerId = appUserService.getPartnerIdForUsername(username);
             if (partnerId == null) return Page.empty(pageable);
             spec = spec.and((root, query, cb) -> cb.equal(root.get("productPartnerID"), partnerId));
         }
 
-        // Search: name OR SKU
         if (search != null && !search.isBlank()) {
             String pattern = "%" + search.toLowerCase() + "%";
             spec = spec.and((root, query, cb) -> cb.or(
@@ -135,7 +104,6 @@ public class ProductService {
             ));
         }
 
-        // Stock-status filter
         if ("instock".equalsIgnoreCase(filter)) {
             spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("productQuantity"), 0));
         } else if ("outofstock".equalsIgnoreCase(filter)) {
@@ -146,10 +114,7 @@ public class ProductService {
     }
 
     // -----------------------------------------------------------------
-    // Payload validation — applied on both create and update.
-    // The frontend already blocks negative values via input[min=0], but
-    // a hand-crafted request can bypass that. Throws IllegalArgumentException,
-    // which the controllers translate to HTTP 400.
+    // Payload validation
     // -----------------------------------------------------------------
     private void validateProduct(Product product) {
         if (product == null) {

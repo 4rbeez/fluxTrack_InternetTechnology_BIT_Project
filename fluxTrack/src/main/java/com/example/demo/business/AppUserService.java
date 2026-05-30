@@ -84,4 +84,16 @@ public class AppUserService implements UserDetailsService {
     public void deleteUser(Long id) {
         appUserRepository.deleteById(id);
     }
+
+    /** Shared admin check — replaces all hardcoded "admin".equals(username) checks. */
+    public boolean isAdminUser(String username) {
+        AppUser user = appUserRepository.findByUsername(username).orElse(null);
+        return user != null && "ADMIN".equals(user.getRole());
+    }
+
+    /** Shared partnerID resolution — replaces all hardcoded switch maps. */
+    public Long getPartnerIdForUsername(String username) {
+        AppUser user = appUserRepository.findByUsername(username).orElse(null);
+        return user != null ? user.getPartnerID() : null;
+    }
 }

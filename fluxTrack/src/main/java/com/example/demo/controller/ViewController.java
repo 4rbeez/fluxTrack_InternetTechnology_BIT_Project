@@ -35,6 +35,11 @@ public class ViewController {
         return "partners";
     }
 
+    @GetMapping("/users")
+    public String users() { 
+        return "users"; 
+    }
+
     @GetMapping("/orders")
     public String orders() {
         return "orders";

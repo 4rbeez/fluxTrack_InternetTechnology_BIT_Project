@@ -55,6 +55,7 @@ public class SecurityConfig {
                     "/orders",
                     "/tickets",
                     "/users",          // Phase 2 — admin user management shell
+                    "/user/*/avatar", 
                     "/css/**",
                     "/js/**",
                     "/images/**",

@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.demo.business.AppUserService;
 import com.example.demo.business.PartnerService;
+import com.example.demo.data.domain.AppUser;
 import com.example.demo.data.domain.Partner;
 
 @RestController
@@ -24,15 +26,17 @@ public class PartnerController {
 
     @Autowired
     private PartnerService partnerService;
-    
+
+    @Autowired
+    private AppUserService appUserService;
+
     // Get Partner by ID
     @GetMapping(path = "/{id}", produces = "application/json")
     public ResponseEntity<Partner> getPartnerById(@PathVariable Long id) {
         try {
             Partner partner = partnerService.getPartnerById(id);
             return ResponseEntity.ok(partner);
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Partner not found with given id: " + id, e);
         }
     }
@@ -49,11 +53,9 @@ public class PartnerController {
         try {
             partner = partnerService.addPartner(partner);
             return ResponseEntity.ok(partner);
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to add partner: " + e.getMessage(), e);
         }
-        
     }
 
     // Update Partner
@@ -62,8 +64,7 @@ public class PartnerController {
         try {
             partner = partnerService.updatePartner(id, partner);
             return ResponseEntity.ok(partner);
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Partner not found with given id: " + id, e);
         }
     }
@@ -71,11 +72,23 @@ public class PartnerController {
     // Delete Partner
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Void> deletePartner(@PathVariable Long id) {
+        // Block deletion if any user accounts are linked to this partner
+        List<AppUser> linkedUsers = appUserService.getAllUsers().stream()
+                .filter(u -> id.equals(u.getPartnerID()))
+                .toList();
+        if (!linkedUsers.isEmpty()) {
+            String usernames = linkedUsers.stream()
+                    .map(AppUser::getUsername)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("");
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot delete partner: linked user account(s) exist (" + usernames + "). Remove or reassign them first.");
+        }
+
         try {
             partnerService.deletePartner(id);
-            return ResponseEntity.ok().build(); 
-        } 
-        catch (Exception e) {
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Partner not found with given id: " + id, e);
         }
     }
